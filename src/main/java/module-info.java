@@ -9,6 +9,7 @@ module converter {
     requires java.desktop;
     requires image4j;
     requires org.slf4j;
+    requires javafx.swing;
 
     opens converter to javafx.fxml;
     exports converter;

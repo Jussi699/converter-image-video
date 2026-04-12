@@ -1,4 +1,4 @@
-package Model.WorkWithFiles;
+package model.workWithFiles;
 
 import javafx.stage.Stage;
 

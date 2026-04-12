@@ -1,4 +1,4 @@
-package Model.Logger;
+package model.logger;
 
 import javafx.scene.control.Alert;
 import org.slf4j.Logger;

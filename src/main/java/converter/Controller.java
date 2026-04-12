@@ -1,9 +1,12 @@
 package converter;
 
-import Model.Converter.ConverterImage;
-import Model.Converter.DetermineType;
-import Model.Logger.ErrorLogger;
-import Model.WorkWithFiles.ClassSelect;
+import javafx.embed.swing.SwingFXUtils;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import model.converter.ConverterImage;
+import model.converter.DetermineType;
+import model.logger.ErrorLogger;
+import model.workWithFiles.ClassSelect;
 import javafx.animation.PauseTransition;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
@@ -12,6 +15,8 @@ import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -29,6 +34,18 @@ public class Controller {
 
     @FXML
     private Label LabelSelectImageName;
+
+    @FXML
+    private Slider imageScaleSlider;
+
+    @FXML
+    private Pane leftPane;
+
+    @FXML
+    private Pane rightPane;
+
+    @FXML
+    private ImageView imageViewPhoto;
 
     @FXML
     private AnchorPane AnchorPane;
@@ -73,6 +90,10 @@ public class Controller {
         assert LabelSelectImageName != null : "fx:id=\"LabelSelectImageName\" was not injected!";
         assert ComboBoxIcoSize != null : "fx:id=\"ComboBoxIcoSize\" was not injected!";
         assert LabelSuccessConvert != null : "fx:id=\"LabelSuccessConvert\" was not injected!";
+        assert imageViewPhoto != null : "fx:id=\"imageViewPhoto\" was not injected!";
+        assert leftPane != null : "fx:id=\"leftPane\" was not injected!";
+        assert rightPane != null : "fx:id=\"rightPane\" was not injected!";
+        assert imageScaleSlider != null : "fx:id=\"imageScaleSlider\" was not injected!";
 
         Tooltip tooltipChoiceDir = new Tooltip("Standard directory, Desktop");
         btnChoiceDirForSaveImage.setTooltip(tooltipChoiceDir);
@@ -135,6 +156,20 @@ public class Controller {
                 }
             }
         });
+
+        ComboBoxIcoSize.getSelectionModel().selectedItemProperty().addListener((_, _, newVal) -> {
+            if (newVal != null && !newVal.equals(ICO_PLACEHOLDER) && imageViewPhoto.getImage() != null) {
+                if (image != null && image.getName().toLowerCase().endsWith(".ico")) {
+                    try {
+                        double size = Double.parseDouble(newVal);
+                        imageViewPhoto.setFitHeight(size);
+                        imageViewPhoto.setFitWidth(size);
+                    } catch (NumberFormatException e) {
+                        ErrorLogger.alertDialog(Alert.AlertType.WARNING, "Error", "Format", "Invalid size value!");
+                    }
+                }
+            }
+        });
     }
 
     @FXML
@@ -164,11 +199,44 @@ public class Controller {
     @FXML
     public void ActionBtnSelectFile() {
         ClassSelect selectImageFile = new ClassSelect();
-        Stage stage = getStage(btnSelectPhotoFile);
+        Stage stage = (Stage) btnSelectPhotoFile.getScene().getWindow();
         image = selectImageFile.choiceFile(stage);
 
-        if (image != null) {
-            LabelSelectImageName.setText(image.getName());
+        if (image == null) return;
+
+        LabelSelectImageName.setText(image.getName());
+
+        try {
+            BufferedImage bi = ImageIO.read(image);
+            if (bi == null) {
+                ErrorLogger.alertDialog(Alert.AlertType.WARNING, "Error", "Format", "Unsupported image format!");
+                return;
+            }
+
+            Image fxImage = SwingFXUtils.toFXImage(bi, null);
+            imageViewPhoto.setImage(fxImage);
+
+            updateImageSize();
+        } catch (IOException e) {
+            ErrorLogger.alertDialog(Alert.AlertType.WARNING, "Error", "IO", "File error!");
+        }
+    }
+
+
+    private void updateImageSize() {
+        if (imageViewPhoto.getImage() != null && image != null) {
+            if (image.getName().toLowerCase().endsWith(".ico")) {
+                String val = ComboBoxIcoSize.getValue();
+                double size = (val == null || val.equals(ICO_PLACEHOLDER)) ? 16 : Double.parseDouble(val);
+
+                imageViewPhoto.setPreserveRatio(false);
+                imageViewPhoto.setFitHeight(size);
+                imageViewPhoto.setFitWidth(size);
+            } else {
+                imageViewPhoto.setPreserveRatio(true);
+                imageViewPhoto.setFitHeight(imageViewPhoto.getFitHeight() - 20);
+                imageViewPhoto.setFitWidth(imageViewPhoto.getFitHeight());
+            }
         }
     }
 

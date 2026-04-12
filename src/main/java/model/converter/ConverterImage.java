@@ -1,4 +1,4 @@
-package Model.Converter;
+package model.converter;
 
 import net.ifok.image.image4j.codec.ico.ICOEncoder;
 import net.ifok.image.image4j.codec.ico.ICODecoder;
