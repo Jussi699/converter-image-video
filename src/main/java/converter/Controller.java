@@ -1,11 +1,18 @@
 package converter;
 
 import Model.Converter.ConverterImage;
+import Model.Converter.DetermineType;
 import Model.Logger.ErrorLogger;
 import Model.WorkWithFiles.ClassSelect;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
-import javafx.scene.control.*;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
+import javafx.scene.control.ProgressBar;
+import javafx.scene.control.ToggleButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Pane;
@@ -15,9 +22,12 @@ import java.io.File;
 import java.nio.file.Paths;
 
 public class Controller {
+
     private static File image;
-    private static File outputPath ;
+    private static File outputPath;
     private static String typeImage;
+    private static int sizeIcoImage;
+
     @FXML
     private Label LabelSelectImageName;
 
@@ -40,9 +50,6 @@ public class Controller {
     private ToggleButton btnToJPEG;
 
     @FXML
-    private ToggleButton btnToICO;
-
-    @FXML
     private Button btnSubmitConvert;
 
     @FXML
@@ -52,6 +59,9 @@ public class Controller {
     private Button btnChoiceDirForSaveImage;
 
     @FXML
+    private ComboBox<String> ComboBoxIcoSize;
+
+    @FXML
     public void initialize() {
         assert AnchorPane != null : "fx:id=\"AnchorPane\" was not injected!";
         assert mainPane != null : "fx:id=\"mainPane\" was not injected!";
@@ -59,34 +69,83 @@ public class Controller {
         assert LabelConvertPhoto != null : "fx:id=\"LabelConvertPhoto\" was not injected!";
         assert btnToPNG != null : "fx:id=\"btnToPNG\" was not injected!";
         assert btnToJPEG != null : "fx:id=\"btnToJPEG\" was not injected!";
-        assert btnToICO != null : "fx:id=\"btnToICO\" was not injected!";
         assert btnSubmitConvert != null : "fx:id=\"btnSubmitConvert\" was not injected!";
         assert ProgressBarCompleteConvert != null : "fx:id=\"ProgressBarCompleteConvert\" was not injected!";
         assert btnChoiceDirForSaveImage != null : "fx:id=\"btnChoiceDirForSaveImage\" was not injected!";
         assert LabelSelectImageName != null : "fx:id=\"LabelSelectImageName\" was not injected!";
+        assert ComboBoxIcoSize != null : "fx:id=\"ComboBoxIcoSize\" was not injected!";
 
         outputPath = Paths.get(System.getProperty("user.home"), "Desktop").toFile();
+
+        ComboBoxIcoSize.getItems().addAll("16", "32", "64", "128");
+        ComboBoxIcoSize.setDisable(false);
+        ComboBoxIcoSize.setValue("to ICO");
+
+        ComboBoxIcoSize.setButtonCell(new ListCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+
+                if (empty || item == null) {
+                    setText("to ICO");
+                    setStyle(
+                            "-fx-background-color: LightGrey;" +
+                                    "-fx-background-radius: 10;" +
+                                    "-fx-border-radius: 10;" +
+                                    "-fx-alignment: center;" +
+                                    "-fx-text-fill: black;"
+                    );
+                } else {
+                    setText(item);
+                    setStyle(
+                            "-fx-background-color: #32CD32;" +
+                                    "-fx-background-radius: 10;" +
+                                    "-fx-border-radius: 10;" +
+                                    "-fx-alignment: center;" +
+                                    "-fx-text-fill: black;"
+                    );
+                }
+            }
+        });
+
+        ComboBoxIcoSize.setCellFactory(_ -> new ListCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty || item == null ? null : item);
+                setStyle("-fx-alignment: center; -fx-text-fill: black;");
+            }
+        });
     }
 
     @FXML
     private void ActionBtnToPNG(MouseEvent event) {
-        btnToICO.setSelected(false);
         btnToJPEG.setSelected(false);
         typeImage = "png";
-    }
-
-    @FXML
-    private void ActionBtnToICO(MouseEvent event) {
-        btnToJPEG.setSelected(false);
-        btnToPNG.setSelected(false);
-        typeImage = "ico";
+        ComboBoxIcoSize.setDisable(false);
+        ComboBoxIcoSize.setValue("to ICO");
     }
 
     @FXML
     private void ActionBtnToJPEG(MouseEvent event) {
-        btnToICO.setSelected(false);
         btnToPNG.setSelected(false);
         typeImage = "jpeg";
+        ComboBoxIcoSize.setDisable(false);
+        ComboBoxIcoSize.setValue("to ICO");
+    }
+
+    @FXML
+    private void onChoiceIcoSize() {
+        String selected = ComboBoxIcoSize.getValue();
+
+        if (selected == null || selected.equals("to ICO")) {
+            return;
+        }
+
+        sizeIcoImage = Integer.parseInt(selected);
+        typeImage = "ico";
+        btnToPNG.setSelected(false);
+        btnToJPEG.setSelected(false);
     }
 
     @FXML
@@ -94,36 +153,98 @@ public class Controller {
         ClassSelect selectImageFile = new ClassSelect();
         Stage stage = (Stage) ((Node) mouseEvent.getSource()).getScene().getWindow();
         image = selectImageFile.choiceFile(mouseEvent, stage);
-        LabelSelectImageName.setText(image.getName());
 
+        if (image != null) {
+            LabelSelectImageName.setText(image.getName());
+        }
     }
 
+    @FXML
     public void btnChoiceDirForSaveImage(MouseEvent mouseEvent) {
         Stage stage = (Stage) ((Node) mouseEvent.getSource()).getScene().getWindow();
-        outputPath  = ClassSelect.setPathForSave(mouseEvent, stage);
+        File selectedPath = ClassSelect.setPathForSave(mouseEvent, stage);
+        if (selectedPath != null) {
+            outputPath = selectedPath;
+        }
     }
 
+    private String getFileExtension(File file) {
+        if (file == null) {
+            return "";
+        }
 
+        String fileName = file.getName();
+        int dotIndex = fileName.lastIndexOf('.');
+
+        if (dotIndex == -1 || dotIndex == fileName.length() - 1) {
+            return "";
+        }
+
+        return fileName.substring(dotIndex + 1).toLowerCase();
+    }
+
+    private String normalizeFormat(String format) {
+        if (format == null) {
+            return "";
+        }
+
+        String normalizedFormat = format.toLowerCase();
+        if ("jpg".equals(normalizedFormat)) {
+            return "jpeg";
+        }
+
+        return normalizedFormat;
+    }
+
+    private String getSourceImageFormat(File file) {
+        try {
+            return normalizeFormat(DetermineType.determineType(file));
+        } catch (Exception e) {
+            return normalizeFormat(getFileExtension(file));
+        }
+    }
+
+    @FXML
     public void SubmitConvertAndDownload(MouseEvent event) {
         try {
             if (image == null || outputPath == null) {
-                ErrorLogger.alertDialog(Alert.AlertType.WARNING, "Warning", "Warning", "Select image and save directory first.");
+                ErrorLogger.alertDialog(Alert.AlertType.WARNING, "Warning", "Warning", "Select image first.");
                 return;
             }
 
-            if (!btnToICO.isSelected() && typeImage == null) {
+            if (typeImage == null) {
                 ErrorLogger.alertDialog(Alert.AlertType.WARNING, "Warning", "Warning", "Select photo format (PNG/JPEG/ICO).");
                 return;
             }
 
-            if (btnToICO.isSelected()) {
-                ConverterImage.convertToIco(image, outputPath, typeImage);
-            } else {
-                ConverterImage.convert(image, outputPath, typeImage);
+            String inputExtension = getSourceImageFormat(image);
+            String targetFormat = normalizeFormat(typeImage);
+
+            if (inputExtension.equals(targetFormat)) {
+                ErrorLogger.alertDialog(Alert.AlertType.WARNING, "Warning", "Warning",
+                        "You cannot convert an image to the same format.");
+                return;
             }
+
+            if ("ico".equals(targetFormat)) {
+                if (ComboBoxIcoSize.getValue() == null) {
+                    ErrorLogger.alertDialog(Alert.AlertType.WARNING, "Warning", "Warning", "Select ICO size.");
+                    return;
+                }
+
+                ConverterImage.convertToIco(image, outputPath, sizeIcoImage);
+
+            } else {
+                if ("ico".equals(inputExtension)) {
+                    ConverterImage.convertFromIco(image, outputPath, targetFormat);
+                } else {
+                    ConverterImage.convert(image, outputPath, targetFormat);
+                }
+            }
+
         } catch (IllegalArgumentException e) {
             ErrorLogger.alertDialog(Alert.AlertType.WARNING, "Warning", "Warning", "Invalid image or format selected.");
-            ErrorLogger.logError(102, "IllegalArgumentException during conversion", e);
+            ErrorLogger.logError(104, "IllegalArgumentException during conversion", e);
 
         } catch (Exception e) {
             ErrorLogger.alertDialog(Alert.AlertType.ERROR, "Error", "Unexpected Error", "Something went wrong: " + e.getMessage());
