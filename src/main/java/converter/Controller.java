@@ -6,30 +6,24 @@ import Model.Logger.ErrorLogger;
 import Model.WorkWithFiles.ClassSelect;
 import javafx.animation.PauseTransition;
 import javafx.fxml.FXML;
-import javafx.scene.Node;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.Label;
-import javafx.scene.control.ListCell;
-import javafx.scene.control.ProgressBar;
-import javafx.scene.control.ToggleButton;
-import javafx.scene.input.MouseEvent;
+import javafx.scene.control.*;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Paths;
 
 public class Controller {
     private static final int SUCCESS_MESSAGE_DURATION_SECONDS = 5;
+    private static final String ICO_PLACEHOLDER = "to ICO";
 
-    private static File image;
-    private static File outputPath;
-    private static String typeImage;
-    private static int sizeIcoImage;
+    private File image;
+    private File outputPath;
+    private String typeImage;
+    private int sizeIcoImage;
     private final PauseTransition hideSuccessMessageTimer =
             new PauseTransition(Duration.seconds(SUCCESS_MESSAGE_DURATION_SECONDS));
 
@@ -58,9 +52,6 @@ public class Controller {
     private Button btnSubmitConvert;
 
     @FXML
-    private ProgressBar ProgressBarCompleteConvert;
-
-    @FXML
     private Button btnChoiceDirForSaveImage;
 
     @FXML
@@ -78,11 +69,13 @@ public class Controller {
         assert btnToPNG != null : "fx:id=\"btnToPNG\" was not injected!";
         assert btnToJPEG != null : "fx:id=\"btnToJPEG\" was not injected!";
         assert btnSubmitConvert != null : "fx:id=\"btnSubmitConvert\" was not injected!";
-        assert ProgressBarCompleteConvert != null : "fx:id=\"ProgressBarCompleteConvert\" was not injected!";
         assert btnChoiceDirForSaveImage != null : "fx:id=\"btnChoiceDirForSaveImage\" was not injected!";
         assert LabelSelectImageName != null : "fx:id=\"LabelSelectImageName\" was not injected!";
         assert ComboBoxIcoSize != null : "fx:id=\"ComboBoxIcoSize\" was not injected!";
         assert LabelSuccessConvert != null : "fx:id=\"LabelSuccessConvert\" was not injected!";
+
+        Tooltip tooltipChoiceDir = new Tooltip("Standard directory, Desktop");
+        btnChoiceDirForSaveImage.setTooltip(tooltipChoiceDir);
 
         outputPath = Paths.get(System.getProperty("user.home"), "Desktop").toFile();
         LabelSuccessConvert.setVisible(false);
@@ -97,15 +90,15 @@ public class Controller {
 
         ComboBoxIcoSize.getItems().addAll("16", "32", "64", "128");
         ComboBoxIcoSize.setDisable(false);
-        ComboBoxIcoSize.setValue("to ICO");
+        ComboBoxIcoSize.setValue(ICO_PLACEHOLDER);
 
         ComboBoxIcoSize.setButtonCell(new ListCell<>() {
             @Override
             protected void updateItem(String item, boolean empty) {
                 super.updateItem(item, empty);
 
-                if (empty || item == null) {
-                    setText("to ICO");
+                if (empty || item == null || ICO_PLACEHOLDER.equals(item)) {
+                    setText(ICO_PLACEHOLDER);
                     setStyle(
                             "-fx-background-color: LightGrey;" +
                                     "-fx-background-radius: 10;" +
@@ -131,7 +124,7 @@ public class Controller {
             protected void updateItem(String item, boolean empty) {
                 super.updateItem(item, empty);
 
-                if (empty || item == null) {
+                if (empty || item == null || ICO_PLACEHOLDER.equals(item)) {
                     setText(null);
                     setGraphic(null);
                     setStyle("-fx-background-color: transparent;");
@@ -145,26 +138,20 @@ public class Controller {
     }
 
     @FXML
-    private void ActionBtnToPNG(MouseEvent event) {
-        btnToJPEG.setSelected(false);
-        typeImage = "png";
-        ComboBoxIcoSize.setDisable(false);
-        ComboBoxIcoSize.setValue("to ICO");
+    private void ActionBtnToPNG() {
+        selectRasterFormat("png");
     }
 
     @FXML
-    private void ActionBtnToJPEG(MouseEvent event) {
-        btnToPNG.setSelected(false);
-        typeImage = "jpeg";
-        ComboBoxIcoSize.setDisable(false);
-        ComboBoxIcoSize.setValue("to ICO");
+    private void ActionBtnToJPEG() {
+        selectRasterFormat("jpeg");
     }
 
     @FXML
     private void onChoiceIcoSize() {
         String selected = ComboBoxIcoSize.getValue();
 
-        if (selected == null || selected.equals("to ICO")) {
+        if (selected == null || selected.equals(ICO_PLACEHOLDER)) {
             return;
         }
 
@@ -175,10 +162,10 @@ public class Controller {
     }
 
     @FXML
-    public void ActionBtnSelectFile(MouseEvent mouseEvent) {
+    public void ActionBtnSelectFile() {
         ClassSelect selectImageFile = new ClassSelect();
-        Stage stage = (Stage) ((Node) mouseEvent.getSource()).getScene().getWindow();
-        image = selectImageFile.choiceFile(mouseEvent, stage);
+        Stage stage = getStage(btnSelectPhotoFile);
+        image = selectImageFile.choiceFile(stage);
 
         if (image != null) {
             LabelSelectImageName.setText(image.getName());
@@ -186,9 +173,9 @@ public class Controller {
     }
 
     @FXML
-    public void btnChoiceDirForSaveImage(MouseEvent mouseEvent) {
-        Stage stage = (Stage) ((Node) mouseEvent.getSource()).getScene().getWindow();
-        File selectedPath = ClassSelect.setPathForSave(mouseEvent, stage);
+    public void btnChoiceDirForSaveImage() {
+        Stage stage = getStage(btnChoiceDirForSaveImage);
+        File selectedPath = ClassSelect.setPathForSave(stage, outputPath);
         if (selectedPath != null) {
             outputPath = selectedPath;
         }
@@ -231,7 +218,7 @@ public class Controller {
     }
 
     @FXML
-    public void SubmitConvertAndDownload(MouseEvent event) {
+    public void SubmitConvertAndDownload() {
         try {
             if (image == null || outputPath == null) {
                 ErrorLogger.alertDialog(Alert.AlertType.WARNING, "Warning", "Warning", "Select image first.");
@@ -245,10 +232,9 @@ public class Controller {
 
             hideSuccessMessage();
 
-            long startTime = System.currentTimeMillis();
-
             String inputExtension = getSourceImageFormat(image);
             String targetFormat = normalizeFormat(typeImage);
+            File convertedFile;
 
             if (inputExtension.equals(targetFormat)) {
                 ErrorLogger.alertDialog(Alert.AlertType.WARNING, "Warning", "Warning",
@@ -257,24 +243,21 @@ public class Controller {
             }
 
             if ("ico".equals(targetFormat)) {
-                if (ComboBoxIcoSize.getValue() == null) {
+                if (ComboBoxIcoSize.getValue() == null || ICO_PLACEHOLDER.equals(ComboBoxIcoSize.getValue()) || sizeIcoImage <= 0) {
                     ErrorLogger.alertDialog(Alert.AlertType.WARNING, "Warning", "Warning", "Select ICO size.");
                     return;
                 }
 
-                ConverterImage.convertToIco(image, outputPath, sizeIcoImage);
-
+                convertedFile = ConverterImage.convertToIco(image, outputPath, sizeIcoImage);
             } else {
                 if ("ico".equals(inputExtension)) {
-                    ConverterImage.convertFromIco(image, outputPath, targetFormat);
+                    convertedFile = ConverterImage.convertFromIco(image, outputPath, targetFormat);
                 } else {
-                    ConverterImage.convert(image, outputPath, targetFormat);
+                    convertedFile = ConverterImage.convert(image, outputPath, targetFormat);
                 }
             }
 
-            File convertedFile = findLatestConvertedFile(outputPath, targetFormat, startTime);
-
-            if (convertedFile != null && convertedFile.exists() && convertedFile.isFile() && convertedFile.length() > 0) {
+            if (isValidConvertedFile(convertedFile)) {
                 showSuccessMessage("Image converted successfully!");
             } else {
                 ErrorLogger.alertDialog(Alert.AlertType.WARNING, "Warning", "Warning",
@@ -285,35 +268,32 @@ public class Controller {
             ErrorLogger.alertDialog(Alert.AlertType.WARNING, "Warning", "Warning", "Invalid image or format selected.");
             ErrorLogger.logError(104, "IllegalArgumentException during conversion", e);
 
+        } catch (IOException e) {
+            ErrorLogger.alertDialog(Alert.AlertType.ERROR, "Error", "Conversion Error", "Failed to convert image: " + e.getMessage());
+            ErrorLogger.logError(105, "I/O error during conversion", e);
+
         } catch (Exception e) {
             ErrorLogger.alertDialog(Alert.AlertType.ERROR, "Error", "Unexpected Error", "Something went wrong: " + e.getMessage());
             ErrorLogger.logError(999, "Unexpected error in SubmitConvertAndDownload", e);
         }
     }
 
-    private File findLatestConvertedFile(File directory, String extension, long startTime) {
-        if (directory == null || !directory.exists() || !directory.isDirectory()) {
-            return null;
-        }
+    private void selectRasterFormat(String format) {
+        typeImage = format;
+        btnToPNG.setSelected("png".equals(format));
+        btnToJPEG.setSelected("jpeg".equals(format));
+        ComboBoxIcoSize.setValue(ICO_PLACEHOLDER);
+    }
 
-        File[] files = directory.listFiles((dir, name) ->
-                name.toLowerCase().endsWith("." + extension.toLowerCase()));
+    private Stage getStage(Control control) {
+        return (Stage) control.getScene().getWindow();
+    }
 
-        if (files == null || files.length == 0) {
-            return null;
-        }
-
-        File latestFile = null;
-
-        for (File file : files) {
-            if (file.isFile() && file.lastModified() >= startTime) {
-                if (latestFile == null || file.lastModified() > latestFile.lastModified()) {
-                    latestFile = file;
-                }
-            }
-        }
-
-        return latestFile;
+    private boolean isValidConvertedFile(File convertedFile) {
+        return convertedFile != null
+                && convertedFile.exists()
+                && convertedFile.isFile()
+                && convertedFile.length() > 0;
     }
 
     private void showSuccessMessage(String message) {

@@ -1,7 +1,5 @@
 package Model.Converter;
 
-import Model.Logger.ErrorLogger;
-import javafx.scene.control.Alert;
 import net.ifok.image.image4j.codec.ico.ICOEncoder;
 import net.ifok.image.image4j.codec.ico.ICODecoder;
 
@@ -11,107 +9,62 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
-import java.util.Random;
+import java.util.Locale;
+import java.util.UUID;
 
 public class ConverterImage {
-    private static final Random random = new Random();
+    public static File convert(File image, File pathForSave, String typeFile) throws IOException {
+        validateSourceImage(image);
+        validateOutputDirectory(pathForSave);
 
-    public static void convert(File image, File pathForSave, String typeFile) {
-        try {
-            BufferedImage bufImage = ImageIO.read(image);
-            if (bufImage == null) {
-                throw new IOException("Unable to read image");
-            }
+        BufferedImage bufImage = readImage(image);
+        String outputFormat = normalizeOutputFormat(typeFile);
+        BufferedImage preparedImage = prepareImageForFormat(bufImage, outputFormat);
+        File outputImage = createOutputFile(image, pathForSave, typeFile);
 
-            String outputFormat = normalizeOutputFormat(typeFile);
-            BufferedImage preparedImage = prepareImageForFormat(bufImage, outputFormat);
-            String nameFile = image.getName().substring(0, image.getName().lastIndexOf(".")) + "_converted_" + random.nextInt() + "." + typeFile;
-            String outputPath = pathForSave.getAbsolutePath() + File.separator + nameFile;
-            File outputImage = new File(outputPath);
-
-            boolean written = ImageIO.write(preparedImage, outputFormat, outputImage);
-            if (!written) {
-                throw new IOException("Unsupported output format: " + typeFile);
-            }
-        } catch (IOException | IllegalArgumentException e) {
-            ErrorLogger.alertDialog(Alert.AlertType.WARNING, "Warning", "Warning", "You have not selected an image.");
-            ErrorLogger.logError(101, "Argument is null, maybe not selected image! | " +
-                    "In class: " + DetermineType.class.getName() +
-                    "In Method: " + ErrorLogger.getCurrentMethodName(), e);
-            return;
+        boolean written = ImageIO.write(preparedImage, outputFormat, outputImage);
+        if (!written) {
+            throw new IOException("Unsupported output format: " + typeFile);
         }
+
+        return outputImage;
     }
 
-    public static void convertToIco(File image, File pathForSave, int size) {
-        try {
-            BufferedImage bufImage = ImageIO.read(image);
-            if (bufImage == null) {
-                throw new IOException("Unable to read image");
-            }
+    public static File convertToIco(File image, File pathForSave, int size) throws IOException {
+        validateSourceImage(image);
+        validateOutputDirectory(pathForSave);
 
-            if (size <= 0) {
-                throw new IllegalArgumentException("Size must be greater than 0");
-            }
-
-            BufferedImage resized = resizeImage(bufImage, size, size);
-
-            String nameFile = image.getName().substring(0, image.getName().lastIndexOf(".")) + "_converted_" + random.nextInt() +".ico";
-            String outputPath = pathForSave.getAbsolutePath() + File.separator + nameFile;
-            File outputImage = new File(outputPath);
-
-            ICOEncoder.write(resized, outputImage);
-
-        } catch (IOException e) {
-            ErrorLogger.alertDialog(Alert.AlertType.WARNING, "Warning", "Warning",
-                    "Maybe you have not selected an image.");
-            ErrorLogger.logError(105,
-                    "ICO convert error | In class: " + ConverterImage.class.getName() +
-                            " In Method: " + ErrorLogger.getCurrentMethodName(), e);
-            return;
-        } catch (IllegalArgumentException e) {
-            ErrorLogger.alertDialog(Alert.AlertType.WARNING, "Warning", "Warning",
-                    "Wrong ico size.");
-            ErrorLogger.logError(106,
-                    "ICO convert error | In class: " + ConverterImage.class.getName() +
-                            " In Method: " + ErrorLogger.getCurrentMethodName(), e);
-            return;
+        if (size <= 0) {
+            throw new IllegalArgumentException("Size must be greater than 0");
         }
+
+        BufferedImage bufImage = readImage(image);
+        BufferedImage resized = resizeImage(bufImage, size, size);
+        File outputImage = createOutputFile(image, pathForSave, "ico");
+
+        ICOEncoder.write(resized, outputImage);
+        return outputImage;
     }
 
-    public static void convertFromIco(File image, File pathForSave, String typeFile) {
-        try {
-            List<BufferedImage> images = ICODecoder.read(image);
-            if (images == null || images.isEmpty()) {
-                throw new IOException("ICO file does not contain images");
-            }
+    public static File convertFromIco(File image, File pathForSave, String typeFile) throws IOException {
+        validateSourceImage(image);
+        validateOutputDirectory(pathForSave);
 
-            String outputFormat = normalizeOutputFormat(typeFile);
-            BufferedImage bestImage = prepareImageForFormat(getBestImage(images), outputFormat);
-
-            String nameFile = image.getName().substring(0, image.getName().lastIndexOf(".")) + "_converted_" + random.nextInt() + "." + typeFile;
-            String outputPath = pathForSave.getAbsolutePath() + File.separator + nameFile;
-            File outputImage = new File(outputPath);
-
-            boolean written = ImageIO.write(bestImage, outputFormat, outputImage);
-            if (!written) {
-                throw new IOException("Unsupported output format: " + typeFile);
-            }
-
-        } catch (IOException e) {
-            ErrorLogger.alertDialog(Alert.AlertType.WARNING, "Warning", "Warning",
-                    "Maybe ICO file was not selected or cannot be converted.");
-            ErrorLogger.logError(105,
-                    "ICO decode/convert error | In class: " + ConverterImage.class.getName() +
-                            " In Method: " + ErrorLogger.getCurrentMethodName(), e);
-            return;
-        } catch (IllegalArgumentException e) {
-            ErrorLogger.alertDialog(Alert.AlertType.WARNING, "Warning", "Warning",
-                    "Wrong arguments for ICO conversion.");
-            ErrorLogger.logError(106,
-                    "ICO decode/convert error | In class: " + ConverterImage.class.getName() +
-                            " In Method: " + ErrorLogger.getCurrentMethodName(), e);
-            return;
+        List<BufferedImage> images = ICODecoder.read(image);
+        if (images == null || images.isEmpty()) {
+            throw new IOException("ICO file does not contain images");
         }
+
+        String outputFormat = normalizeOutputFormat(typeFile);
+        BufferedImage bestImage = prepareImageForFormat(getBestImage(images), outputFormat);
+        File outputImage = createOutputFile(image, pathForSave, typeFile);
+
+        boolean written = ImageIO.write(bestImage, outputFormat, outputImage);
+        if (!written) {
+            throw new IOException("Unsupported output format: " + typeFile);
+        }
+
+        return outputImage;
     }
 
     private static String normalizeOutputFormat(String typeFile) {
@@ -119,7 +72,7 @@ public class ConverterImage {
             throw new IllegalArgumentException("Output format is null");
         }
 
-        return "jpeg".equalsIgnoreCase(typeFile) ? "jpg" : typeFile.toLowerCase();
+        return "jpeg".equalsIgnoreCase(typeFile) ? "jpg" : typeFile.toLowerCase(Locale.ROOT);
     }
 
     private static BufferedImage prepareImageForFormat(BufferedImage source, String format) {
@@ -160,6 +113,47 @@ public class ConverterImage {
         }
 
         return best;
+    }
+
+    private static void validateSourceImage(File image) {
+        if (image == null || !image.exists() || !image.isFile()) {
+            throw new IllegalArgumentException("Source image is invalid");
+        }
+    }
+
+    private static void validateOutputDirectory(File pathForSave) {
+        if (pathForSave == null || !pathForSave.exists() || !pathForSave.isDirectory()) {
+            throw new IllegalArgumentException("Output directory is invalid");
+        }
+    }
+
+    private static BufferedImage readImage(File image) throws IOException {
+        BufferedImage bufferedImage = ImageIO.read(image);
+        if (bufferedImage == null) {
+            throw new IOException("Unable to read image");
+        }
+
+        return bufferedImage;
+    }
+
+    private static File createOutputFile(File image, File pathForSave, String extension) {
+        String normalizedExtension = extension.toLowerCase(Locale.ROOT);
+        String fileName = getBaseName(image.getName())
+                + "_converted_"
+                + UUID.randomUUID().toString().replace("-", "")
+                + "."
+                + normalizedExtension;
+
+        return new File(pathForSave, fileName);
+    }
+
+    private static String getBaseName(String fileName) {
+        int dotIndex = fileName.lastIndexOf('.');
+        if (dotIndex <= 0) {
+            return fileName;
+        }
+
+        return fileName.substring(0, dotIndex);
     }
 }
 

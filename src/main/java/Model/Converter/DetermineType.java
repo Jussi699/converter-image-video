@@ -21,7 +21,12 @@ public class DetermineType {
             Iterator<ImageReader> readers = ImageIO.getImageReaders(iis);
             if (readers.hasNext()) {
                 ImageReader reader = readers.next();
-                return reader.getFormatName();
+                try {
+                    reader.setInput(iis, true, true);
+                    return reader.getFormatName();
+                } finally {
+                    reader.dispose();
+                }
             }
 
             throw new IOException("Unknown image format");

@@ -28,14 +28,14 @@
                                 layoutX="104.0"
                                 layoutY="81.0"
                                 mnemonicParsing="false"
-                                onMouseClicked="#ActionBtnSelectFile"
+                                onAction="#ActionBtnSelectFile"
                                 text="Select image" />
 
                         <Button fx:id="btnChoiceDirForSaveImage"
                                 layoutX="75.0"
                                 layoutY="136.0"
                                 mnemonicParsing="false"
-                                onMouseClicked="#btnChoiceDirForSaveImage"
+                                onAction="#btnChoiceDirForSaveImage"
                                 prefHeight="25.0"
                                 prefWidth="150.0"
                                 text="Directory for save" />
@@ -44,7 +44,7 @@
                                       layoutX="40.0"
                                       layoutY="200.0"
                                       mnemonicParsing="false"
-                                      onMouseClicked="#ActionBtnToPNG"
+                                      onAction="#ActionBtnToPNG"
                                       prefHeight="25.0"
                                       prefWidth="67.0"
                                       text="to PNG" />
@@ -53,7 +53,7 @@
                                       layoutX="116.0"
                                       layoutY="200.0"
                                       mnemonicParsing="false"
-                                      onMouseClicked="#ActionBtnToJPEG"
+                                      onAction="#ActionBtnToJPEG"
                                       prefHeight="25.0"
                                       prefWidth="67.0"
                                       text="to JPEG" />
@@ -69,10 +69,10 @@
                                 layoutX="75.0"
                                 layoutY="270.0"
                                 mnemonicParsing="false"
-                                onMouseClicked="#SubmitConvertAndDownload"
+                                onAction="#SubmitConvertAndDownload"
                                 prefHeight="25.0"
-                                prefWidth="150.0"
-                                text="Confirm convert" />
+                                prefWidth="180.0"
+                                text="Convert and Download" />
 
                         <Label fx:id="LabelSelectImageName"
                                alignment="BOTTOM_LEFT"
