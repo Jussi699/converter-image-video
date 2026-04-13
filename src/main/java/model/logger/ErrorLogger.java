@@ -30,31 +30,22 @@ public class ErrorLogger {
         }
     }
 
-    public static void alertDialog(Alert.AlertType type, String title, String headerText ,String message) {
-        Alert alert;
+    public static void alertDialog(Alert.AlertType type, String title, String headerText, String message) {
+        Alert alert = new Alert(type);
+        alert.setTitle(title);
+        alert.setHeaderText(headerText);
+        alert.setContentText(message);
+
+        var pane = alert.getDialogPane();
+        pane.getStyleClass().add("dialog-pane");
+
         switch (type) {
-            case Alert.AlertType.WARNING:
-                alert = new Alert(Alert.AlertType.WARNING);
-                alert.setTitle(title);
-                alert.setHeaderText(headerText);
-                alert.setContentText(message);
-                alert.show();
-                break;
-            case Alert.AlertType.ERROR:
-                alert = new Alert(Alert.AlertType.ERROR);
-                alert.setTitle(title);
-                alert.setHeaderText(headerText);
-                alert.setContentText(message);
-                alert.show();
-                break;
-            case Alert.AlertType.INFORMATION:
-                alert = new Alert(Alert.AlertType.INFORMATION);
-                alert.setTitle(title);
-                alert.setHeaderText(headerText);
-                alert.setContentText(message);
-                alert.show();
-                break;
+            case WARNING -> pane.getStyleClass().add("warning");
+            case ERROR -> pane.getStyleClass().add("danger");
+            case INFORMATION -> pane.getStyleClass().add("info");
         }
+
+        alert.showAndWait();
     }
 
     public static void logError(int errorCode, String message, Throwable t) {

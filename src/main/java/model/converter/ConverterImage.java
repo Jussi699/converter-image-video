@@ -51,7 +51,7 @@ public class ConverterImage {
         validateOutputDirectory(pathForSave);
 
         List<BufferedImage> images = ICODecoder.read(image);
-        if (images == null || images.isEmpty()) {
+        if (images.isEmpty()) {
             throw new IOException("ICO file does not contain images");
         }
 

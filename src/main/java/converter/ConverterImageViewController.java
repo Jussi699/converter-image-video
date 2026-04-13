@@ -6,6 +6,7 @@ import javafx.geometry.Pos;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import model.converter.ConverterImage;
 import model.converter.DetermineType;
 import model.logger.ErrorLogger;
@@ -13,8 +14,6 @@ import model.workWithFiles.ClassSelect;
 import javafx.animation.PauseTransition;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
-import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import net.ifok.image.image4j.codec.ico.ICODecoder;
@@ -26,9 +25,10 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.List;
 
-public class Controller {
+public class ConverterImageViewController {
     private static final int SUCCESS_MESSAGE_DURATION_SECONDS = 5;
     private static final String ICO_PLACEHOLDER = "to ICO";
+
 
     private File image;
     private File outputPath;
@@ -37,111 +37,27 @@ public class Controller {
     private final PauseTransition hideSuccessMessageTimer =
             new PauseTransition(Duration.seconds(SUCCESS_MESSAGE_DURATION_SECONDS));
 
-    @FXML
-    private Button btnOpenConverter;
-
-    @FXML
-    private Label LabelSelectImageName;
-
-    @FXML
-    private Slider imageScaleSlider;
-
-    @FXML
-    private Pane leftPane;
-
-    @FXML
-    private Pane rightPane;
-
-    @FXML
-    private Pane homePage;
-
-    @FXML
-    private Pane converterPage;
-
-    @FXML
-    private Button navHomeButton;
-
-    @FXML
-    private Button navConverterButton;
-
-    @FXML
-    private ImageView imageViewPhoto;
-
-    @FXML
-    private AnchorPane AnchorPane;
-
-    @FXML
-    private Button btnReset;
-
-    @FXML
-    private Pane mainPane;
-
-    @FXML
-    private Button btnSelectPhotoFile;
-
-    @FXML
-    private Label LabelConvertPhoto;
-
-    @FXML
-    private ToggleButton btnToPNG;
-
-    @FXML
-    private ToggleButton btnToJPEG;
-
-    @FXML
-    private Button btnSubmitConvert;
-
-    @FXML
-    private Button btnChoiceDirForSaveImage;
-
-    @FXML
-    private ComboBox<String> ComboBoxIcoSize;
-
-    @FXML
-    private Label LabelSuccessConvert;
-
-    @FXML
-    private ScrollPane scrollPanePhoto;
-
-    @FXML
-    private StackPane imageContainer;
-
-    @FXML
-    private ToggleButton btnToWEBM;
-
-    @FXML
-    private Label LabelPlus;
-
-    @FXML
-    private Label LabelMinus;
+    @FXML private VBox converterPage;
+    @FXML private Label LabelSelectImageName;
+    @FXML private Slider imageScaleSlider;
+    @FXML private ImageView imageViewPhoto;
+    @FXML private Button btnReset;
+    @FXML private Button btnSelectPhotoFile;
+    @FXML private Label LabelConvertPhoto;
+    @FXML private ToggleButton btnToPNG;
+    @FXML private ToggleButton btnToJPEG;
+    @FXML private Button btnSubmitConvert;
+    @FXML private Button btnChoiceDirForSaveImage;
+    @FXML private ComboBox<String> ComboBoxIcoSize;
+    @FXML private Label LabelSuccessConvert;
+    @FXML private ScrollPane scrollPanePhoto;
+    @FXML private StackPane imageContainer;
+    @FXML private ToggleButton btnToWEBM;
+    @FXML private Label LabelPlus;
+    @FXML private Label LabelMinus;
 
     @FXML
     public void initialize() {
-        assert AnchorPane != null : "fx:id=\"AnchorPane\" was not injected!";
-        assert mainPane != null : "fx:id=\"mainPane\" was not injected!";
-        assert btnSelectPhotoFile != null : "fx:id=\"btnSelectPhotoFile\" was not injected!";
-        assert LabelConvertPhoto != null : "fx:id=\"LabelConvertPhoto\" was not injected!";
-        assert btnToPNG != null : "fx:id=\"btnToPNG\" was not injected!";
-        assert btnToJPEG != null : "fx:id=\"btnToJPEG\" was not injected!";
-        assert btnSubmitConvert != null : "fx:id=\"btnSubmitConvert\" was not injected!";
-        assert btnChoiceDirForSaveImage != null : "fx:id=\"btnChoiceDirForSaveImage\" was not injected!";
-        assert LabelSelectImageName != null : "fx:id=\"LabelSelectImageName\" was not injected!";
-        assert ComboBoxIcoSize != null : "fx:id=\"ComboBoxIcoSize\" was not injected!";
-        assert LabelSuccessConvert != null : "fx:id=\"LabelSuccessConvert\" was not injected!";
-        assert imageViewPhoto != null : "fx:id=\"imageViewPhoto\" was not injected!";
-        assert leftPane != null : "fx:id=\"leftPane\" was not injected!";
-        assert rightPane != null : "fx:id=\"rightPane\" was not injected!";
-        assert homePage != null : "fx:id=\"homePage\" was not injected!";
-        assert converterPage != null : "fx:id=\"converterPage\" was not injected!";
-        assert navHomeButton != null : "fx:id=\"navHomeButton\" was not injected!";
-        assert navConverterButton != null : "fx:id=\"navConverterButton\" was not injected!";
-        assert imageScaleSlider != null : "fx:id=\"imageScaleSlider\" was not injected!";
-        assert scrollPanePhoto != null : "fx:id=\"scrollPanePhoto\" was not injected!";
-        assert btnToWEBM != null : "fx:id=\"btnToWEBM\" was not injected!";
-        assert LabelPlus != null : "fx:id=\"LabelPlus\" was not injected!";
-        assert LabelMinus != null : "fx:id=\"LabelMinus\" was not injected!";
-        assert btnReset != null : "fx:id=\"btnReset\" was not injected!";
-
         Tooltip tooltipChoiceDir = new Tooltip("Standard directory, Desktop");
         btnChoiceDirForSaveImage.setTooltip(tooltipChoiceDir);
 
@@ -240,17 +156,6 @@ public class Controller {
             }
         });
 
-        setActivePage(homePage, navHomeButton);
-    }
-
-    @FXML
-    private void showHomePage() {
-        setActivePage(homePage, navHomeButton);
-    }
-
-    @FXML
-    private void showConverterPage() {
-        setActivePage(converterPage, navConverterButton);
     }
 
     @FXML
@@ -308,7 +213,7 @@ public class Controller {
     private BufferedImage readPreviewImage(File imageFile) throws IOException {
         if ("ico".equals(getFileExtension(imageFile))) {
             List<BufferedImage> images = ICODecoder.read(imageFile);
-            if (images == null || images.isEmpty()) {
+            if (images.isEmpty()) {
                 return null;
             }
 
@@ -446,7 +351,11 @@ public class Controller {
             }
 
             if (isValidConvertedFile(convertedFile)) {
-                showSuccessMessage("Image converted successfully!");
+                LabelSuccessConvert.setText("Image converted successfully!");
+                LabelSuccessConvert.setManaged(true);
+                LabelSuccessConvert.setVisible(true);
+                hideSuccessMessageTimer.stop();
+                hideSuccessMessageTimer.playFromStart();
             } else {
                 ErrorLogger.alertDialog(Alert.AlertType.WARNING, "Warning", "Warning",
                         "Conversion finished, but saved file was not found.");
@@ -485,14 +394,6 @@ public class Controller {
                 && convertedFile.length() > 0;
     }
 
-    private void showSuccessMessage(String message) {
-        LabelSuccessConvert.setText(message);
-        LabelSuccessConvert.setManaged(true);
-        LabelSuccessConvert.setVisible(true);
-        hideSuccessMessageTimer.stop();
-        hideSuccessMessageTimer.playFromStart();
-    }
-
     private void hideSuccessMessage() {
         hideSuccessMessageTimer.stop();
         LabelSuccessConvert.setVisible(false);
@@ -504,32 +405,19 @@ public class Controller {
         selectRasterFormat("webp");
     }
 
-    private void setActivePage(Pane pageToShow, Button activeButton) {
-        homePage.setVisible(pageToShow == homePage);
-        homePage.setManaged(pageToShow == homePage);
-        converterPage.setVisible(pageToShow == converterPage);
-        converterPage.setManaged(pageToShow == converterPage);
-
-        navHomeButton.setStyle(getNavButtonStyle(activeButton == navHomeButton));
-        navConverterButton.setStyle(getNavButtonStyle(activeButton == navConverterButton));
-    }
-
-    private String getNavButtonStyle(boolean active) {
-        if (active) {
-            return "-fx-background-color: #32CD32; -fx-text-fill: black; -fx-font-weight: bold; -fx-background-radius: 8;";
-        }
-
-        return "-fx-background-color: #323232; -fx-text-fill: white; -fx-background-radius: 8;";
-    }
-
     public void isPressedReset() {
         image = null;
         LabelSelectImageName.setText("none");
         imageViewPhoto.setImage(null);
-        selectRasterFormat("jpeg");
-        selectRasterFormat("webp");
-        selectRasterFormat("png");
-        selectRasterFormat("ico");
+
+        btnToPNG.setSelected(false);
+        btnToJPEG.setSelected(false);
+        btnToWEBM.setSelected(false);
+        ComboBoxIcoSize.setValue(ICO_PLACEHOLDER);
+
+        sizeIcoImage = 0;
+        imageScaleSlider.setValue(1.0);
+        hideSuccessMessage();
     }
 
 }
