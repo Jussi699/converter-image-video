@@ -5,78 +5,109 @@
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.*?>
 
-<AnchorPane fx:id="AnchorPane" prefHeight="600.0" prefWidth="1000.0" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="converter.Controller">
+<AnchorPane fx:id="AnchorPane" prefHeight="600.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="converter.Controller">
     <children>
-        <HBox fx:id="mainPane" prefHeight="600.0" prefWidth="1000.0" style="-fx-background-color: #2b2b2b;">
+        <HBox fx:id="mainPane" prefHeight="600.0" prefWidth="800.0" style="-fx-background-color: #2b2b2b;">
             <children>
-                <VBox fx:id="leftPane" alignment="TOP_CENTER" prefHeight="600.0" prefWidth="480.0" spacing="35.0" style="-fx-background-color: #4b4b4b;">
+                <VBox fx:id="leftPane" alignment="TOP_CENTER" prefHeight="600.0" prefWidth="170.0" spacing="16.0" style="-fx-background-color: #1f1f1f;">
                     <children>
-                        <Label fx:id="LabelConvertPhoto" alignment="CENTER" prefWidth="200.0" text="Convert Photo" textFill="RED">
+                        <Label alignment="CENTER" prefWidth="140.0" style="-fx-font-size: 22px; -fx-font-weight: bold;" text="Converter" textFill="WHITE">
                             <VBox.margin>
-                                <Insets top="10.0" />
+                                <Insets top="20.0" />
                             </VBox.margin>
                         </Label>
+                        <Button fx:id="navHomeButton" mnemonicParsing="false" onAction="#showHomePage" prefWidth="140.0"
+                                style="-fx-background-color: #323232; -fx-text-fill: white; -fx-background-radius: 8;" text="Home" />
 
-                        <Button fx:id="btnSelectPhotoFile" mnemonicParsing="false" onAction="#ActionBtnSelectFile" prefWidth="180.0" text="Select image" />
-
-                        <Button fx:id="btnChoiceDirForSaveImage" mnemonicParsing="false" onAction="#btnChoiceDirForSaveImage" prefWidth="180.0" text="Directory for save" />
-
-                        <HBox alignment="CENTER" spacing="30.0">
-                            <children>
-                                <ToggleButton fx:id="btnToPNG" mnemonicParsing="false" onAction="#ActionBtnToPNG" prefWidth="70.0" text="to PNG" />
-                                <ToggleButton fx:id="btnToJPEG" mnemonicParsing="false" onAction="#ActionBtnToJPEG" prefWidth="70.0" text="to JPEG" />
-                                <ToggleButton fx:id="btnToWEBM" mnemonicParsing="false" onAction="#ActionBtnToWEBM" prefWidth="70.0" text="to WEBM" />
-                                <ComboBox fx:id="ComboBoxIcoSize" onAction="#onChoiceIcoSize" prefWidth="80.0" />
-                            </children>
-                            <VBox.margin>
-                                <Insets />
-                            </VBox.margin>
-                        </HBox>
-
-                        <VBox alignment="CENTER" spacing="10.0">
-                            <children>
-                                <Button fx:id="btnSubmitConvert" mnemonicParsing="false" onAction="#SubmitConvertAndDownload" prefWidth="230.0" text="Convert and Download" />
-                                <Label fx:id="LabelSuccessConvert" alignment="CENTER" prefWidth="280.0" textFill="#32CD32" />
-                            </children>
-                        </VBox>
-
-                        <ScrollPane fx:id="scrollPanePhoto"
-                                    prefHeight="250.0" prefWidth="350.0" pannable="true" fitToHeight="true" fitToWidth="true"
-                                    style="-fx-background: #3b3b3b; -fx-border-color: #3b3b3b; -fx-background-color: transparent;">
-                            <content>
-                                <StackPane fx:id="imageContainer" minHeight="245.0" minWidth="345.0" >
-                                    <children>
-                                        <ImageView fx:id="imageViewPhoto" fitHeight="250.0" fitWidth="350.0"
-                                                   pickOnBounds="true" preserveRatio="true" />
-                                    </children>
-                                </StackPane>
-                            </content>
-                        </ScrollPane>
-
-                        <VBox alignment="CENTER">
-                            <children>
-                                <Slider fx:id="imageScaleSlider" maxWidth="300.0" min="1.0" max="3.0" value="1.0" />
-
-                                <Label fx:id="LabelSelectImageName" alignment="CENTER" prefWidth="400.0" text="none" textFill="RED">
-                                    <VBox.margin>
-                                        <Insets top="10.0" />
-                                    </VBox.margin>
-                                </Label>
-                            </children>
-                            <VBox.margin>
-                                <Insets top="-30.0" />
-                            </VBox.margin>
-                        </VBox>
-
+                        <Button fx:id="navConverterButton" mnemonicParsing="false" onAction="#showConverterPage" prefWidth="140.0"
+                                style="-fx-background-color: #323232; -fx-text-fill: white; -fx-background-radius: 8;" text="Image" />
                     </children>
                     <padding>
-                        <Insets left="20.0" right="20.0" />
+                        <Insets left="14.0" right="14.0" />
                     </padding>
                 </VBox>
+                <StackPane fx:id="rightPane" prefHeight="600.0" prefWidth="630.0" style="-fx-background-color: #2b2b2b;" HBox.hgrow="ALWAYS">
+                    <children>
+                        <VBox fx:id="homePage" alignment="CENTER_LEFT" spacing="18.0" style="-fx-background-color: #343434;">
+                            <children>
+                                <Label style="-fx-font-size: 30px; -fx-font-weight: bold;" text="Image Converter" textFill="WHITE" />
+                                <Label prefWidth="520.0" style="-fx-font-size: 16px;" text="Слева находится навигация. Нажмите кнопку Converter, чтобы открыть страницу конвертации в этом же окне приложения." textFill="#d6d6d6" wrapText="true" />
+                                <Button mnemonicParsing="false" onAction="#showConverterPage" prefWidth="220.0" style="-fx-background-color: #32CD32; -fx-text-fill: black; -fx-font-weight: bold; -fx-background-radius: 8;" text="Open converter" />
+                            </children>
+                            <padding>
+                                <Insets left="40.0" right="40.0" top="40.0" bottom="40.0" />
+                            </padding>
+                        </VBox>
+                        <VBox fx:id="converterPage" alignment="TOP_CENTER" prefHeight="600.0" prefWidth="630.0" spacing="20.0" style="-fx-background-color: #4b4b4b;" visible="false" managed="false">
+                            <children>
+                                <Label fx:id="LabelConvertPhoto" alignment="CENTER" prefWidth="200.0" text="Convert Photo" textFill="RED">
+                                    <VBox.margin>
+                                        <Insets top="8.0" />
+                                    </VBox.margin>
+                                </Label>
+                                <HBox alignment="CENTER" spacing="20.0">
+                                    <children>
+                                        <Button fx:id="btnSelectPhotoFile" mnemonicParsing="false" onAction="#ActionBtnSelectFile" prefWidth="150.0" text="Select image" />
+                                        <Button fx:id="btnChoiceDirForSaveImage" mnemonicParsing="false" onAction="#btnChoiceDirForSaveImage" prefWidth="150.0" text="Directory for save" />
+                                    </children>
+                                </HBox>
+                                <HBox alignment="CENTER" spacing="20.0" translateY="5.0">
+                                    <children>
+                                        <ToggleButton fx:id="btnToPNG" mnemonicParsing="false" onAction="#ActionBtnToPNG" prefWidth="85.0" text="to PNG" />
+                                        <ToggleButton fx:id="btnToJPEG" mnemonicParsing="false" onAction="#ActionBtnToJPEG" prefWidth="85.0" text="to JPEG" />
+                                        <ToggleButton fx:id="btnToWEBM" mnemonicParsing="false" onAction="#ActionBtnToWEBM" prefWidth="85.0" text="to WEBP" />
+                                        <ComboBox fx:id="ComboBoxIcoSize" onAction="#onChoiceIcoSize" prefWidth="95.0" />
+                                    </children>
+                                </HBox>
+                                <VBox alignment="CENTER" spacing="10.0" translateY="10.0">
+                                    <children>
+                                        <Button fx:id="btnSubmitConvert" mnemonicParsing="false" onAction="#SubmitConvertAndDownload" prefWidth="210.0" text="Convert and Download" />
+                                        <Label fx:id="LabelSuccessConvert" alignment="CENTER" prefWidth="280.0" textFill="#32CD32" />
+                                    </children>
+                                </VBox>
+                                <ScrollPane fx:id="scrollPanePhoto"
+                                            fitToHeight="true" fitToWidth="true" pannable="true" prefWidth="590.0" VBox.vgrow="ALWAYS"
+                                            style="-fx-background: #3b3b3b; -fx-border-color: #3b3b3b; -fx-background-color: transparent;">
+                                    <VBox.margin>
+                                        <Insets top="20.0" />
+                                    </VBox.margin>
+                                    <content>
+                                        <StackPane fx:id="imageContainer" minHeight="200.0" minWidth="560.0">
+                                            <children>
+                                                <ImageView fx:id="imageViewPhoto" fitHeight="260.0" fitWidth="560.0"
+                                                           pickOnBounds="true" preserveRatio="true" />
+                                            </children>
+                                        </StackPane>
+                                    </content>
+                                </ScrollPane>
+                                <VBox alignment="CENTER" spacing="8.0">
+                                    <children>
+                                        <HBox alignment="CENTER" spacing="10.0">
+                                            <children>
+                                                <Label fx:id="LabelMinus" text="-" textFill="RED" />
+                                                <Slider fx:id="imageScaleSlider"
+                                                        min="1.0"
+                                                        max="3.0"
+                                                        value="1.0"
+                                                        prefWidth="260.0" />
+                                                <Label fx:id="LabelPlus" text="+" textFill="RED" />
+                                            </children>
+                                        </HBox>
 
-                <Region prefWidth="40.0" />
-
-                <Pane fx:id="rightPane" prefHeight="600.0" prefWidth="480.0" style="-fx-background-color: #4b4b4b;" />
+                                        <Label fx:id="LabelSelectImageName"
+                                               alignment="CENTER"
+                                               prefWidth="400.0"
+                                               text="none"
+                                               textFill="RED" />
+                                    </children>
+                                </VBox>
+                            </children>
+                            <padding>
+                                <Insets left="16.0" right="16.0" bottom="16.0" />
+                            </padding>
+                        </VBox>
+                    </children>
+                </StackPane>
             </children>
         </HBox>
     </children>

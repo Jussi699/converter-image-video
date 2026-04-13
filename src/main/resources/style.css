@@ -37,7 +37,7 @@
 }
 
 .toggle-button:hover{
-    -fx-background-color: #32CD32;
+    -fx-background-color: LightBlue;
     -fx-scale-x: 1.02;
     -fx-scale-y: 1.02;
 }

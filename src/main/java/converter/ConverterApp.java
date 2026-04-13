@@ -11,7 +11,7 @@ public class ConverterApp extends Application {
     @Override
     public void start(Stage stage) throws IOException {
         FXMLLoader fxmlLoader = new FXMLLoader(ConverterApp.class.getResource("/view.fxml"));
-        Scene scene = new Scene(fxmlLoader.load(), 1000, 600);
+        Scene scene = new Scene(fxmlLoader.load(), 800, 600);
         scene.getStylesheets().add(String.valueOf(getClass().getResource("/style.css")));
         stage.setResizable(false);
         stage.setTitle("Converter!");

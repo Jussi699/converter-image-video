@@ -1,7 +1,7 @@
 package converter;
 
 import javafx.embed.swing.SwingFXUtils;
-import javafx.event.ActionEvent;
+import javafx.geometry.Bounds;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.StackPane;
@@ -28,6 +28,7 @@ import java.util.List;
 public class Controller {
     private static final int SUCCESS_MESSAGE_DURATION_SECONDS = 5;
     private static final String ICO_PLACEHOLDER = "to ICO";
+    private static final double IMAGE_VIEWPORT_PADDING = 8.0;
 
     private File image;
     private File outputPath;
@@ -47,6 +48,18 @@ public class Controller {
 
     @FXML
     private Pane rightPane;
+
+    @FXML
+    private Pane homePage;
+
+    @FXML
+    private Pane converterPage;
+
+    @FXML
+    private Button navHomeButton;
+
+    @FXML
+    private Button navConverterButton;
 
     @FXML
     private ImageView imageViewPhoto;
@@ -90,6 +103,11 @@ public class Controller {
     @FXML
     private ToggleButton btnToWEBM;
 
+    @FXML
+    private Label LabelPlus;
+
+    @FXML
+    private Label LabelMinus;
 
     @FXML
     public void initialize() {
@@ -107,29 +125,30 @@ public class Controller {
         assert imageViewPhoto != null : "fx:id=\"imageViewPhoto\" was not injected!";
         assert leftPane != null : "fx:id=\"leftPane\" was not injected!";
         assert rightPane != null : "fx:id=\"rightPane\" was not injected!";
+        assert homePage != null : "fx:id=\"homePage\" was not injected!";
+        assert converterPage != null : "fx:id=\"converterPage\" was not injected!";
+        assert navHomeButton != null : "fx:id=\"navHomeButton\" was not injected!";
+        assert navConverterButton != null : "fx:id=\"navConverterButton\" was not injected!";
         assert imageScaleSlider != null : "fx:id=\"imageScaleSlider\" was not injected!";
         assert scrollPanePhoto != null : "fx:id=\"scrollPanePhoto\" was not injected!";
         assert btnToWEBM != null : "fx:id=\"btnToWEBM\" was not injected!";
+        assert LabelPlus != null : "fx:id=\"LabelPlus\" was not injected!";
+        assert LabelMinus != null : "fx:id=\"LabelMinus\" was not injected!";
 
         Tooltip tooltipChoiceDir = new Tooltip("Standard directory, Desktop");
         btnChoiceDirForSaveImage.setTooltip(tooltipChoiceDir);
 
         imageScaleSlider.setMin(1.0);
-        imageScaleSlider.setMax(5.0); // Увеличил до 5 для наглядности
+        imageScaleSlider.setMax(5.0);
         imageScaleSlider.setValue(1.0);
 
         imageViewPhoto.scaleXProperty().bind(imageScaleSlider.valueProperty());
         imageViewPhoto.scaleYProperty().bind(imageScaleSlider.valueProperty());
 
-        imageScaleSlider.valueProperty().addListener((_, _, newVal) -> {
-            double zoom = newVal.doubleValue();
+        imageScaleSlider.valueProperty().addListener((_, _, newVal) -> updateImageContainerSize(newVal.doubleValue()));
 
-            double newWidth = imageViewPhoto.getFitWidth() * zoom;
-            double newHeight = imageViewPhoto.getFitHeight() * zoom;
-
-            imageContainer.setMinWidth(newWidth);
-            imageContainer.setMinHeight(newHeight);
-        });
+        scrollPanePhoto.viewportBoundsProperty().addListener((_, _, _) -> updateImageSize());
+        imageViewPhoto.imageProperty().addListener((_, _, _) -> updateImageSize());
 
         outputPath = Paths.get(System.getProperty("user.home"), "Desktop").toFile();
         LabelSuccessConvert.setVisible(false);
@@ -203,6 +222,18 @@ public class Controller {
                 }
             }
         });
+
+        setActivePage(homePage, navHomeButton);
+    }
+
+    @FXML
+    private void showHomePage() {
+        setActivePage(homePage, navHomeButton);
+    }
+
+    @FXML
+    private void showConverterPage() {
+        setActivePage(converterPage, navConverterButton);
     }
 
     @FXML
@@ -293,11 +324,33 @@ public class Controller {
                 imageViewPhoto.setFitHeight(size);
                 imageViewPhoto.setFitWidth(size);
             } else {
+                Bounds viewportBounds = scrollPanePhoto.getViewportBounds();
+                double viewportHeight = viewportBounds.getHeight();
+                double viewportWidth = viewportBounds.getWidth();
+
+                if (viewportHeight <= 0) {
+                    viewportHeight = scrollPanePhoto.getHeight();
+                }
+
+                if (viewportWidth <= 0) {
+                    viewportWidth = scrollPanePhoto.getWidth();
+                }
+
                 imageViewPhoto.setPreserveRatio(true);
-                imageViewPhoto.setFitHeight(imageViewPhoto.getFitHeight() - 20);
-                imageViewPhoto.setFitWidth(imageViewPhoto.getFitHeight());
+                imageViewPhoto.setFitHeight(Math.max(1, viewportHeight - IMAGE_VIEWPORT_PADDING));
+                imageViewPhoto.setFitWidth(Math.max(1, viewportWidth - IMAGE_VIEWPORT_PADDING));
             }
+
+            updateImageContainerSize(imageScaleSlider.getValue());
         }
+    }
+
+    private void updateImageContainerSize(double zoom) {
+        double newWidth = imageViewPhoto.getFitWidth() * zoom;
+        double newHeight = imageViewPhoto.getFitHeight() * zoom;
+
+        imageContainer.setMinWidth(newWidth);
+        imageContainer.setMinHeight(newHeight);
     }
 
     @FXML
@@ -442,5 +495,23 @@ public class Controller {
 
     public void ActionBtnToWEBM() {
         selectRasterFormat("webp");
+    }
+
+    private void setActivePage(Pane pageToShow, Button activeButton) {
+        homePage.setVisible(pageToShow == homePage);
+        homePage.setManaged(pageToShow == homePage);
+        converterPage.setVisible(pageToShow == converterPage);
+        converterPage.setManaged(pageToShow == converterPage);
+
+        navHomeButton.setStyle(getNavButtonStyle(activeButton == navHomeButton));
+        navConverterButton.setStyle(getNavButtonStyle(activeButton == navConverterButton));
+    }
+
+    private String getNavButtonStyle(boolean active) {
+        if (active) {
+            return "-fx-background-color: #32CD32; -fx-text-fill: black; -fx-font-weight: bold; -fx-background-radius: 8;";
+        }
+
+        return "-fx-background-color: #323232; -fx-text-fill: white; -fx-background-radius: 8;";
     }
 }
