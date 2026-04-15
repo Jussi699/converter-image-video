@@ -187,7 +187,7 @@ public class ConverterImageViewController {
 
         if (image == null) return;
 
-        ErrorLogger.info("User selected file: " + image.getAbsolutePath());
+        ErrorLogger.info("User selected file (image): " + image.getAbsolutePath());
         labelSelectImageName.setText("Select image: " + image.getName());
 
         try {

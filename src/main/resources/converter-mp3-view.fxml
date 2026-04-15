@@ -8,6 +8,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.layout.StackPane?>
 
+<?import javafx.scene.control.ComboBox?>
 <VBox fx:id="converterMP3Page"
       alignment="TOP_CENTER"
       prefHeight="600.0"
@@ -30,9 +31,9 @@
     </Label>
 
     <HBox alignment="CENTER" spacing="20.0">
-        <Button fx:id="btnSelectAudioFile"
+        <Button fx:id="btnSelectAudioVideoFile"
                 mnemonicParsing="false"
-                onAction="#onSelectAudioPressed"
+                onAction="#onSelectAudioVideoPressed"
                 prefWidth="170.0"
                 text="Select audio/video"/>
 
@@ -41,6 +42,20 @@
                 onAction="#onSelectOutputDirectoryPressed"
                 prefWidth="170.0"
                 text="Directory for save"/>
+    </HBox>
+
+    <HBox alignment="CENTER" spacing="20.0" translateY="5.0">
+        <ComboBox fx:id="comboBoxChoiceBitRate"
+                  onAction="#onChoiceBitRate"
+                  prefWidth="120.0"/>
+
+        <ComboBox fx:id="comboBoxChoiceChannels"
+                  onAction="#onChoiceChannels"
+                  prefWidth="120.0"/>
+
+        <ComboBox fx:id="comboBoxChoiceSamplingRate"
+                  onAction="#onChoiceSamplingRate"
+                  prefWidth="120.0"/>
     </HBox>
 
     <StackPane translateY="10.0">

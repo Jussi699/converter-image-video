@@ -54,7 +54,10 @@
 }
 
 .combo-box-popup .list-view {
-    -fx-min-height: 110px;
+    -fx-background-color: LightGrey;
+    -fx-background-radius: 10;
+    -fx-border-radius: 10;
+    -fx-pref-width: 70px;
 }
 
 .combo-box .list-cell {
@@ -83,14 +86,6 @@
 
 .combo-box.selected-choice {
     -fx-background-color: #32CD32;
-}
-
-.combo-box-popup .list-view {
-    -fx-background-color: LightGrey;
-    -fx-background-radius: 10;
-    -fx-border-radius: 10;
-    -fx-pref-height: 90px;
-    -fx-pref-width: 70px;
 }
 
 .combo-box-popup .list-view .list-cell {
@@ -144,4 +139,9 @@
     -fx-text-fill: black;
     -fx-font-weight: bold;
     -fx-background-radius: 8
+}
+
+#comboBoxChoiceBitRate, #comboBoxChoiceChannels,
+#comboBoxChoiceSampleRate .list-cell{
+    -fx-font-size: 30px !important;
 }
