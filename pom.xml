@@ -21,6 +21,12 @@
             <version>3.13.1</version>
         </dependency>
         <dependency>
+            <groupId>org.bytedeco</groupId>
+            <artifactId>javacv-platform</artifactId>
+            <version>1.5.13</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
             <groupId>ws.schild</groupId>
             <artifactId>jave-core</artifactId>
             <version>3.5.0</version>

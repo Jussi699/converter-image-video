@@ -8,6 +8,7 @@ public class HomeViewController {
     @FXML private VBox homePage;
     @FXML private Button btnOpenImageConverter;
     @FXML private Button btnOpenVideoConverter;
+    @FXML private Button btnOpenMP3Converter;
     private ControllerView mainController;
 
     public void setMainController(ControllerView mainController) {
@@ -25,6 +26,13 @@ public class HomeViewController {
     private void onOpenVideoConverterPressed() {
         if (mainController != null) {
             mainController.showConverterVideoPage();
+        }
+    }
+
+    @FXML
+    private void onOpenMP3ConverterPressed() {
+        if (mainController != null) {
+            mainController.showConverterMP3Page();
         }
     }
 }

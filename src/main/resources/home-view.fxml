@@ -36,6 +36,12 @@
                     onAction="#onOpenVideoConverterPressed"
                     prefWidth="220.0"
                     text="Video Converter" />
+
+            <Button mnemonicParsing="false"
+                    fx:id="btnOpenMP3Converter"
+                    onAction="#onOpenMP3ConverterPressed"
+                    prefWidth="220.0"
+                    text="MP3 Converter" />
         </HBox>
 
     <padding>

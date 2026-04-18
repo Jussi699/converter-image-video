@@ -96,6 +96,10 @@
     -fx-background-color: black;
 }
 
+#comboBoxChoiceBitRate .list-view{
+    -fx-pref-width: 155px;
+}
+
 #comboBoxIcoSize .list-view {
     -fx-pref-width: 85px;
     -fx-min-width: 85px;
@@ -168,3 +172,4 @@
 .dialog-pane .button:hover {
     -fx-background-color: #5588cc;
 }
+

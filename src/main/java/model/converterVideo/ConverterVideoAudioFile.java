@@ -7,6 +7,8 @@ import ws.schild.jave.Encoder;
 import ws.schild.jave.MultimediaObject;
 import ws.schild.jave.encode.AudioAttributes;
 import ws.schild.jave.encode.EncodingAttributes;
+import ws.schild.jave.encode.VideoAttributes;
+import ws.schild.jave.info.VideoSize;
 import ws.schild.jave.info.MultimediaInfo;
 import ws.schild.jave.progress.EncoderProgressListener;
 
@@ -19,14 +21,16 @@ public class ConverterVideoAudioFile {
     private static final Encoder encoder = new Encoder();
     public static File nameFileAfter;
 
+    /**
+     * Основной метод для конвертации видео и аудио с раздельными битрейтами.
+     */
     public static CompletableFuture<Boolean> convert(File file,
                                                      File pathForSave,
-                                                     int bitRate, int channels, int samplingRate,
-                                                     String videoCodec, String output_format,
+                                                     int videoBitrate, int audioBitrate,
+                                                     int channels, int samplingRate, int fps,
+                                                     String videoCodec, String audioCodec, String output_format, String resolution, String typeConvert,
                                                      Consumer<Double> progressConsumer) {
-        if (file == null || !file.exists()) {
-            ErrorLogger.alertDialog(Alert.AlertType.WARNING, "WARN",
-                    "File missing!", "The selected file was not found or is empty.");
+        if (!checkingFileStatic(file)) {
             return CompletableFuture.completedFuture(false);
         }
 
@@ -35,29 +39,62 @@ public class ConverterVideoAudioFile {
             String fileName = file.getName();
             int dotIndex = fileName.lastIndexOf('.');
             String nameWithoutExtension = (dotIndex == -1) ? fileName : fileName.substring(0, dotIndex);
-            target = new File(pathForSave, nameWithoutExtension + "_" + UUID.randomUUID().toString().replace("-", "") + ".mp3");
+            target = new File(pathForSave, nameWithoutExtension + "_" + UUID.randomUUID().toString().replace("-", "") + "." + output_format);
             nameFileAfter = target;
         } else {
             target = pathForSave;
         }
 
         return CompletableFuture.supplyAsync(() -> {
-            ErrorLogger.info("Starting async...");
+            ErrorLogger.info("Starting async conversion...");
             try {
-                AudioAttributes audio = new AudioAttributes();
-                audio.setCodec(videoCodec);
-                audio.setBitRate(bitRate * 1000);
-                audio.setChannels(channels);
-                audio.setSamplingRate(samplingRate);
-
                 EncodingAttributes attrs = new EncodingAttributes();
-                attrs.setAudioAttributes(audio);
                 attrs.setOutputFormat(output_format);
 
-                ErrorLogger.info("Starting conversation...");
+                AudioAttributes audio = new AudioAttributes();
+                audio.setCodec(audioCodec);
+                if (audioBitrate > 0) {
+                    audio.setBitRate(audioBitrate * 1000);
+                }
+                audio.setChannels(channels);
+                audio.setSamplingRate(samplingRate);
+                attrs.setAudioAttributes(audio);
+
+                if ("video".equalsIgnoreCase(typeConvert)) {
+                    VideoAttributes video = new VideoAttributes();
+                    video.setCodec(videoCodec);
+                    if (videoBitrate > 0) {
+                        video.setBitRate(videoBitrate * 1000);
+                    }
+                    video.setPixelFormat("yuv420p");
+                    
+                    if (fps > 0) {
+                        video.setFrameRate(fps);
+                    }
+                    if (resolution != null && resolution.contains("x")) {
+                        try {
+                            String[] res = resolution.split("x");
+                            int width = Integer.parseInt(res[0]);
+                            int height = Integer.parseInt(res[1]);
+                            
+                            if (width % 2 != 0) width--;
+                            if (height % 2 != 0) height--;
+                            
+                            video.setSize(new VideoSize(width, height));
+                        } catch (Exception e) {
+                            ErrorLogger.warn("Invalid resolution format: " + resolution);
+                        }
+                    }
+                    attrs.setVideoAttributes(video);
+                }
+
+                ErrorLogger.info("Starting encoding: " + file.getName() + " [V-BR: " + videoBitrate + ", A-BR: " + audioBitrate + "]");
+                
                 encoder.encode(new MultimediaObject(file), target, attrs, new EncoderProgressListener() {
                     @Override
-                    public void sourceInfo(MultimediaInfo info) {}
+                    public void sourceInfo(MultimediaInfo info) {
+                        ErrorLogger.info("Source info: " + info.toString());
+                    }
 
                     @Override
                     public void progress(int permille) {
@@ -67,37 +104,68 @@ public class ConverterVideoAudioFile {
                     }
 
                     @Override
-                    public void message(String message) {}
+                    public void message(String message) {
+                        ErrorLogger.info("FFmpeg: " + message);
+                    }
                 });
-                ErrorLogger.info("Conversation has been success!");
+
+                ErrorLogger.info("Conversion successful!");
                 return true;
             } catch (Exception e) {
-                String msg = e.getMessage();
-                boolean isCancelled = msg != null && (msg.contains("Encoding interrupted") || msg.contains("Stream Closed"));
-                
-                if (isCancelled) {
-                    ErrorLogger.info("Conversion was cancelled by user (or stream closed due to abort).");
-                    ErrorLogger.info("User cancel conversion: " + nameFileAfter);
-                    try {
-                        Thread.sleep(100);
-                    } catch (InterruptedException ex) {
-                        ErrorLogger.log(112, ErrorLogger.Level.ERROR, "InterruptedException", e);
-                    }
-                    if (target.exists() && target.delete()) {
-                        ErrorLogger.info("Partial file deleted.");
-                    }
-                } else {
-                    ErrorLogger.info("The conversion was not successful!");
-                    Platform.runLater(() -> ErrorLogger.alertDialog(Alert.AlertType.WARNING, "ERROR", "Exception", "Exception. Check log file for more information!"));
-                    ErrorLogger.log(109, ErrorLogger.Level.ERROR, "Exception", e);
-                    e.printStackTrace();
-                }
+                handleError(e, target);
                 return false;
             }
         });
     }
 
+    /**
+     * Перегрузка для обратной совместимости (например, для MP3-конвертера).
+     */
+    public static CompletableFuture<Boolean> convert(File file,
+                                                     File pathForSave,
+                                                     int bitRate, int channels, int samplingRate,
+                                                     String audioCodec, String output_format,
+                                                     Consumer<Double> progressConsumer) {
+        return convert(file, pathForSave, -1, bitRate, channels, samplingRate, -1, null, audioCodec, output_format, null, "audio", progressConsumer);
+    }
+
     public static void cancelConversion() {
         encoder.abortEncoding();
+    }
+
+    public static MultimediaInfo getMetadata(File file) {
+        try {
+            MultimediaObject obj = new MultimediaObject(file);
+            return obj.getInfo();
+        } catch (Exception e) {
+            ErrorLogger.log(114, ErrorLogger.Level.ERROR, "Exception while getting multimedia info", e);
+            return null;
+        }
+    }
+
+    private static boolean checkingFileStatic(File file) {
+        if (file == null || !file.exists()) {
+            Platform.runLater(() -> ErrorLogger.alertDialog(Alert.AlertType.WARNING, "WARN",
+                    "File missing!", "The selected file was not found or is empty."));
+            return false;
+        }
+        return true;
+    }
+
+    private static void handleError(Exception e, File target) {
+        String msg = e.getMessage();
+        boolean isCancelled = msg != null && (msg.contains("Encoding interrupted") || msg.contains("Stream Closed"));
+
+        if (isCancelled) {
+            ErrorLogger.info("Conversion was cancelled by user.");
+            if (target.exists() && target.delete()) {
+                ErrorLogger.info("Partial file deleted.");
+            }
+        } else {
+            ErrorLogger.info("Conversion failed: " + e.getMessage());
+            e.printStackTrace();
+            Platform.runLater(() -> ErrorLogger.alertDialog(Alert.AlertType.WARNING, "ERROR", "Conversion Error", "FFmpeg Error: " + e.getMessage()));
+            ErrorLogger.log(109, ErrorLogger.Level.ERROR, "Exception during conversion", e);
+        }
     }
 }

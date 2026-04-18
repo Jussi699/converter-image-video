@@ -122,7 +122,7 @@ public class ConverterMP3ViewController {
             return;
         }
 
-        int originalChannels = getChannels(file);
+        int originalChannels = parseChannels(getMetadata(file));
         if (originalChannels == 1 && channel == 2) {
             boolean proceed = ErrorLogger.confirmationDialog(
                     "Mono to Stereo Confirmation",

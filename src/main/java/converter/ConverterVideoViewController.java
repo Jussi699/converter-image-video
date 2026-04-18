@@ -8,24 +8,26 @@ import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+import javafx.util.StringConverter;
 import model.converterVideo.ConverterVideoAudioFile;
 import model.logger.ErrorLogger;
-
-import static model.utility.DetermineType.determineFormat;
-import static model.utility.Util.*;
 import model.select.SelectFile;
-import ws.schild.jave.EncoderException;
-import ws.schild.jave.MultimediaObject;
-import ws.schild.jave.info.MultimediaInfo;
+import model.utility.Item;
 
 import java.io.File;
 import java.nio.file.Paths;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
+
+import static model.utility.Util.*;
 
 public class ConverterVideoViewController {
     private static final String DEFAULT_FILE_TEXT = "Selected file: none";
     private static final int SUCCESS_MESSAGE_DURATION_SECONDS = 5;
-    private static String videoCodec;
 
+    private Item selectedItem;
+    private String resolution;
+    private int fps;
     private int bitRate;
     private int channel;
     private int samplingRate;
@@ -48,6 +50,12 @@ public class ConverterVideoViewController {
     @FXML private ToggleButton btnToMKV;
     @FXML private Label labelSelectVideoName;
     @FXML private Label labelSuccessConvert;
+    @FXML private ComboBox<Item> comboBoxChoiceBitRate;
+    @FXML private ComboBox<Item> comboBoxChoiceChannels;
+    @FXML private ComboBox<Item> comboBoxChoiceSamplingRate;
+    @FXML private ComboBox<Item> comboBoxChoiceFPS;
+    @FXML private ComboBox<String> comboBoxChoiceResolution;
+    @FXML private CheckBox checkBoxGPU;
 
     @FXML
     public void initialize() {
@@ -55,15 +63,67 @@ public class ConverterVideoViewController {
         setupClearMessageTimer(labelSuccessConvert, hideSuccessMessageTimer);
         labelSelectVideoName.setText(DEFAULT_FILE_TEXT);
 
-        try {
-            MultimediaObject instance = new MultimediaObject(new File("C:\\Users\\dinfa\\Desktop\\sample-5s.webm"));
-            MultimediaInfo info = instance.getInfo();
-            ErrorLogger.info(info.getFormat());
-        }
-        catch (EncoderException e) {
-            ErrorLogger.warn("Unable to determine file type!");
-            ErrorLogger.log(113, ErrorLogger.Level.ERROR, "EncoderException", e);
-        }
+        setupComboBox(comboBoxChoiceBitRate, Item::getTitle);
+        setupComboBox(comboBoxChoiceChannels, Item::getTitle);
+        setupComboBox(comboBoxChoiceSamplingRate, Item::getTitle);
+        setupComboBox(comboBoxChoiceFPS, Item::getTitle);
+
+        resetToDefaults();
+
+        comboBoxChoiceBitRate.getItems().addAll(
+                new Item(-1, "Match source"),
+                new Item(1000, "1000 kbps (SD)"),
+                new Item(2500, "2500 kbps (720p)"),
+                new Item(5000, "5000 kbps (1080p)"),
+                new Item(8000, "8000 kbps (High)")
+        );
+
+        comboBoxChoiceChannels.getItems().addAll(
+                new Item(-1, "Match source"),
+                new Item(1, "1 Channels"),
+                new Item(2, "2 Channels")
+        );
+
+        comboBoxChoiceSamplingRate.getItems().addAll(
+                new Item(-1, "Match source"),
+                new Item(8000, "8000 Hz"),
+                new Item(11025, "11025 Hz"),
+                new Item(12000, "12000 Hz"),
+                new Item(16000, "16000 Hz"),
+                new Item(22050, "22050 Hz"),
+                new Item(24000, "24000 Hz"),
+                new Item(32000, "32000 Hz"),
+                new Item(44100, "44100 Hz"),
+                new Item(48000, "48000 Hz")
+        );
+
+        comboBoxChoiceFPS.getItems().addAll(
+                new Item(-1, "Match source"),
+                new Item(24, "24 fps"),
+                new Item(30, "30 fps"),
+                new Item(60, "60 fps")
+        );
+
+        comboBoxChoiceResolution.getItems().addAll(
+                "Match source",
+                "1280x720",
+                "1920x1080",
+                "3840x2160"
+        );
+    }
+
+    private void resetToDefaults() {
+        bitRate = 5000;
+        channel = 2;
+        samplingRate = 44100;
+        fps = 30;
+        resolution = "1920x1080";
+
+        comboBoxChoiceBitRate.setValue(new Item(5000, "5000 kbps (1080p)"));
+        comboBoxChoiceChannels.setValue(new Item(2, "2 Channels"));
+        comboBoxChoiceSamplingRate.setValue(new Item(44100, "44100 Hz"));
+        comboBoxChoiceFPS.setValue(new Item(30, "30 fps"));
+        comboBoxChoiceResolution.setValue("1920x1080");
     }
 
     @FXML
@@ -71,13 +131,32 @@ public class ConverterVideoViewController {
        SelectFile selectFile = new SelectFile();
        Stage stage = (Stage) btnSelectVideoFile.getScene().getWindow();
         file = selectFile.choiceFile(stage,
-               new FileChooser.ExtensionFilter("Video", "*.mp4", "*.avi", "*.mkv", "*.mov", "*.webm") ,"Select vide");
+               new FileChooser.ExtensionFilter("Video", "*.mp4", "*.avi", "*.mkv", "*.mov", "*.webm") ,"Select video");
 
         if (file != null) {
-            labelSelectVideoName.setText("Selected file: " + file.getName());
-            ErrorLogger.info("User selected video: " + file.getAbsolutePath());
+            labelSelectVideoName.setText("Selected file: " + file.getName() + " (Loading info...)");
+            
+            CompletableFuture.supplyAsync(() -> getMetadata(file))
+                .thenAccept(info -> Platform.runLater(() -> updateLabelFromMetadata(info)));
+            
             hideSuccessMessage(labelSuccessConvert, hideSuccessMessageTimer);
         }
+    }
+
+    private void updateLabelFromMetadata(ws.schild.jave.info.MultimediaInfo info) {
+        if (info == null || file == null) return;
+
+        String res = parseResolution(info);
+        int f = parseFps(info);
+        int vbr = parseVideoBitrate(info);
+        int abr = parseAudioBitrate(info);
+
+        String infoText = String.format("Selected file: %s [%s, %d fps, V:%d kbps, A:%d kbps]", 
+                file.getName(), 
+                (res != null ? res : "N/A"), 
+                f, vbr, abr);
+        
+        labelSelectVideoName.setText(infoText);
     }
 
     @FXML
@@ -87,8 +166,36 @@ public class ConverterVideoViewController {
         if (selectedPath != null) {
             outputPath = selectedPath;
             hideSuccessMessage(labelSuccessConvert, hideSuccessMessageTimer);
-            ErrorLogger.info("Output directory selected: " + outputPath.getAbsolutePath());
         }
+    }
+
+    public void onChoiceBitRate() {
+        selectedItem = comboBoxChoiceBitRate.getValue();
+        bitRate = (selectedItem != null) ? selectedItem.getId() : -1;
+    }
+
+    public void onChoiceChannels() {
+        selectedItem = comboBoxChoiceChannels.getValue();
+        channel = (selectedItem != null) ? selectedItem.getId() : -1;
+    }
+
+    public void onChoiceSamplingRate() {
+        selectedItem = comboBoxChoiceSamplingRate.getValue();
+        samplingRate = (selectedItem != null) ? selectedItem.getId() : -1;
+    }
+
+    public void onChoiceFPS() {
+        selectedItem = comboBoxChoiceFPS.getValue();
+        fps = (selectedItem != null) ? selectedItem.getId() : -1;
+    }
+
+    public void onChoiceResolution() {
+        resolution = comboBoxChoiceResolution.getValue();
+    }
+
+    @FXML
+    public void onFormatWEBMPressed() {
+        selectFormat("webm", btnToWEBM);
     }
 
     @FXML
@@ -111,72 +218,63 @@ public class ConverterVideoViewController {
         btnToMP4.setSelected(selectedBtn == btnToMP4);
         btnToAVI.setSelected(selectedBtn == btnToAVI);
         btnToMKV.setSelected(selectedBtn == btnToMKV);
+        btnToWEBM.setSelected(selectedBtn == btnToWEBM);
         hideSuccessMessage(labelSuccessConvert, hideSuccessMessageTimer);
     }
 
     @FXML
     public void onStartConversionPressed() {
-        if(outputPath == null){
-            ErrorLogger.alertDialog(Alert.AlertType.WARNING, "WARN", "Output path missing!", "Select output directory!");
+        if(outputPath == null || file == null || targetFormat == null) {
+            ErrorLogger.alertDialog(Alert.AlertType.WARNING, "WARN", "Missing selection", "Select file, output directory and target format.");
             return;
         }
 
-        if (file == null) {
-            ErrorLogger.alertDialog(Alert.AlertType.WARNING, "WARN", "File missing!", "Select audio or video file!");
-            return;
-        }
+        ws.schild.jave.info.MultimediaInfo sourceInfo = getMetadata(file);
 
-        int originalChannels = getChannels(file);
-        if (originalChannels == 1 && channel == 2) {
-            boolean proceed = ErrorLogger.confirmationDialog(
-                    "Mono to Stereo Confirmation",
-                    "The source file is mono (1 channel).",
-                    "Do you want to convert it to stereo (2 channels) anyway?"
-            );
-            if (!proceed) return;
-        }
+        int finalVideoBitrate = (bitRate == -1) ? parseVideoBitrate(sourceInfo) : bitRate;
+        if (finalVideoBitrate <= 0) finalVideoBitrate = parseBitrate(sourceInfo);
+        if (finalVideoBitrate <= 0) finalVideoBitrate = 5000;
+
+        int finalAudioBitrate = parseAudioBitrate(sourceInfo);
+        if (finalAudioBitrate <= 0) finalAudioBitrate = 192;
+
+        int finalChannels = (channel == -1) ? parseChannels(sourceInfo) : channel;
+        int finalSamplingRate = (samplingRate == -1) ? parseSamplingRate(sourceInfo) : samplingRate;
+        int finalFps = (fps == -1) ? parseFps(sourceInfo) : fps;
+        String finalResolution = ("Match source".equalsIgnoreCase(resolution)) ? parseResolution(sourceInfo) : resolution;
+
+        if (finalChannels <= 0) finalChannels = 2;
+        if (finalSamplingRate <= 0) finalSamplingRate = 44100;
+        if (finalFps <= 0) finalFps = 30;
 
         progressBarConvert.setProgress(0);
         btnSubmitConvert.setDisable(true);
 
-        String formatFile = determineFormat(file);
+        String videoCodec;
+        String audioCodec = "aac";
+        String typeConvert = "video";
+        String ffmpegFormat = targetFormat;
 
-        if(!(formatFile == null)) {
-            switch (formatFile){
-                case "mp4" -> videoCodec = "libx264";
-                case "mkv", "matroska" -> videoCodec = "libx264";
-                case "avi" -> videoCodec = "mpeg4";
-                case "webm" -> videoCodec = "libvpx-vp9";
-                default -> {
-                    videoCodec = "libx264";
-                    ErrorLogger.warn("Unknown format: " + formatFile + ". Using default codec.");
-                }
-            }
-        }
-        else {
-            ErrorLogger.warn("DetermineFormatVideo return NULL");
-            ErrorLogger.alertDialog(Alert.AlertType.ERROR, "ERROR", "NULL",
-                    "The method returned NULL.\nCheck that the file has not been damaged!");
-            return;
+        boolean useGPU = checkBoxGPU != null && checkBoxGPU.isSelected();
+
+        switch (targetFormat) {
+            case "mp4", "m4v" -> { videoCodec = useGPU ? "h264_nvenc" : "libx264"; audioCodec = "aac"; ffmpegFormat = "mp4"; }
+            case "mkv", "matroska" -> { videoCodec = useGPU ? "h264_nvenc" : "libx264"; audioCodec = "aac"; ffmpegFormat = "matroska"; }
+            case "avi" -> { videoCodec = useGPU ? "h264_nvenc" : "mpeg4"; audioCodec = "libmp3lame"; ffmpegFormat = "avi"; }
+            case "webm" -> { videoCodec = "libvpx"; audioCodec = "libvorbis"; ffmpegFormat = "webm"; }
+            default -> { videoCodec = useGPU ? "h264_nvenc" : "libx264"; audioCodec = "aac"; }
         }
 
-        targetFormat = formatFile;
-        ConverterVideoAudioFile.convert(file, outputPath, bitRate, channel, samplingRate,
-                videoCodec, formatFile, progress -> {
+        ConverterVideoAudioFile.convert(file, outputPath, finalVideoBitrate, finalAudioBitrate, finalChannels, finalSamplingRate, finalFps,
+                videoCodec, audioCodec, ffmpegFormat, finalResolution, typeConvert, progress -> {
                     Platform.runLater(() -> progressBarConvert.setProgress(progress));
                 }).thenAccept(success -> Platform.runLater(() -> {
             btnSubmitConvert.setDisable(false);
             if (success) {
-                showSuccessMessage(labelSuccessConvert, "mp3", hideSuccessMessageTimer);
+                showSuccessMessage(labelSuccessConvert, targetFormat, hideSuccessMessageTimer);
                 showProgressBar(progressBarConvert, hideSuccessMessageTimer);
             } else {
-                if (progressBarConvert.getProgress() > 0 && progressBarConvert.getProgress() < 1.0) {
-                    progressBarConvert.setProgress(0);
-                } else {
-                    showErrorMessage(labelSuccessConvert, progressBarConvert,
-                            "So close, yet no success",
-                            hideSuccessMessageTimer);
-                }
+                progressBarConvert.setProgress(0);
             }
         }));
     }
@@ -189,29 +287,18 @@ public class ConverterVideoViewController {
         btnToMP4.setSelected(false);
         btnToAVI.setSelected(false);
         btnToMKV.setSelected(false);
+        btnToWEBM.setSelected(false);
+        if (checkBoxGPU != null) checkBoxGPU.setSelected(false);
+        resetToDefaults();
         hideSuccessMessage(labelSuccessConvert, hideSuccessMessageTimer);
     }
 
-    private boolean isReadyForConversion() {
-        if (file == null) {
-            ErrorLogger.alertDialog(Alert.AlertType.WARNING, "Warning", "Selection", "Select video first.");
-            return false;
-        }
-
-        if (targetFormat == null) {
-            ErrorLogger.alertDialog(Alert.AlertType.WARNING, "Warning", "Selection", "Select target video format.");
-            return false;
-        }
-
-        if (outputPath == null) {
-            ErrorLogger.alertDialog(Alert.AlertType.WARNING, "Warning", "Selection", "Select output directory.");
-            return false;
-        }
-
-        return true;
-    }
-
-    public void onFormatWEBMPressed() {
-
+    private <T> void setupComboBox(ComboBox<T> comboBox, Function<T, String> textProvider) {
+        comboBox.setConverter(new StringConverter<>() {
+            @Override
+            public String toString(T item) { return item == null ? "" : textProvider.apply(item); }
+            @Override
+            public T fromString(String string) { return null; }
+        });
     }
 }
