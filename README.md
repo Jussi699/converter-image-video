@@ -50,8 +50,8 @@ A lightweight, powerful cross-platform media conversion tool built with Java and
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/Jussi699/converter-image-video.git
-   cd Converter
+   git clone https://github.com/Jussi699/media-converter.git
+   cd media-converter
    ```
 
 2. **Build the project:**
