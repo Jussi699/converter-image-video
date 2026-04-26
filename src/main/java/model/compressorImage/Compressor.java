@@ -154,12 +154,44 @@ public class Compressor {
     }
 
     private static void removeMetadataNodes(Document document) {
-        NodeList metadataNodes = document.getElementsByTagNameNS("*", "metadata");
-        for (int i = metadataNodes.getLength() - 1; i >= 0; i--) {
-            Node metadataNode = metadataNodes.item(i);
-            Node parent = metadataNode.getParentNode();
-            if (parent != null) {
-                parent.removeChild(metadataNode);
+        cleanNode(document.getDocumentElement());
+    }
+
+    private static void cleanNode(Node node) {
+        NodeList children = node.getChildNodes();
+        for (int i = children.getLength() - 1; i >= 0; i--) {
+            Node child = children.item(i);
+            
+            // Удаляем комментарии и текстовые узлы с одними пробелами
+            if (child.getNodeType() == Node.COMMENT_NODE || 
+               (child.getNodeType() == Node.TEXT_NODE && child.getNodeValue().trim().isEmpty())) {
+                node.removeChild(child);
+                continue;
+            }
+
+            if (child.getNodeType() == Node.ELEMENT_NODE) {
+                String name = child.getNodeName().toLowerCase(Locale.ROOT);
+                if (name.contains("metadata") || name.contains("sodipodi") ||
+                    name.contains("inkscape") || name.contains("foreignobject") ||
+                    name.equals("desc") || name.equals("title")) {
+                    node.removeChild(child);
+                    continue;
+                }
+
+                org.w3c.dom.NamedNodeMap attributes = child.getAttributes();
+                for (int j = attributes.getLength() - 1; j >= 0; j--) {
+                    Node attr = attributes.item(j);
+                    String attrName = attr.getNodeName().toLowerCase(Locale.ROOT);
+                    if (attrName.contains(":") && !attrName.startsWith("xmlns") && !attrName.startsWith("xlink")) {
+                        attributes.removeNamedItem(attr.getNodeName());
+                    }
+                }
+
+                cleanNode(child);
+
+                if (name.equals("g") && !child.hasChildNodes()) {
+                    node.removeChild(child);
+                }
             }
         }
     }

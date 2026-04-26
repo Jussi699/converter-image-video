@@ -5,11 +5,13 @@ import javafx.scene.control.Button;
 import javafx.scene.layout.VBox;
 
 public class HomeViewController {
+    @FXML private Button btnOpenImageCompressor;
+    @FXML private VBox infoPage;
     @FXML private VBox homePage;
     @FXML private Button btnOpenImageConverter;
     @FXML private Button btnOpenVideoConverter;
-    @FXML private Button btnOpenMP3Converter;
-    private ControllerView mainController;
+    @FXML private Button btnOpenAudioConverter;
+    @FXML private ControllerView mainController;
 
     public void setMainController(ControllerView mainController) {
         this.mainController = mainController;
@@ -30,9 +32,16 @@ public class HomeViewController {
     }
 
     @FXML
-    private void onOpenMP3ConverterPressed() {
+    private void onOpenAudioConverterPressed() {
         if (mainController != null) {
             mainController.showConverterAudioPage();
+        }
+    }
+
+    @FXML
+    private void onOpenImageCompressorPressed(){
+        if (mainController != null) {
+            mainController.showCompressorImagePage();
         }
     }
 }

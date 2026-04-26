@@ -8,6 +8,7 @@ import javafx.scene.control.*;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.input.DragEvent;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
@@ -17,9 +18,9 @@ import model.logger.ErrorLogger;
 import model.select.SelectFile;
 import model.utility.DragDropped;
 import viewHelp.Alerts;
+import viewHelp.Tooltips;
 
 import java.io.File;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -37,6 +38,7 @@ public class ConverterAudioController {
     private final PauseTransition hideSuccessMessageTimer =
             new PauseTransition(Duration.seconds(5));
 
+    @FXML private Button btnInfoCompressor;
     @FXML private StackPane dropZone;
     @FXML private ProgressBar progressBarConvert;
     @FXML private Button btnSelectAudioVideoFile;
@@ -354,5 +356,9 @@ public class ConverterAudioController {
     @FXML
     public void onCancelConversation() {
         ConverterVideoAudioFile.cancelConversion();
+    }
+
+    public void infoCompressorAction(MouseEvent mouseEvent) {
+        Tooltips.setupTooltipInfo(mouseEvent, "If you have any problems, go to \"Info\" page and write to me on Discord", 10);
     }
 }

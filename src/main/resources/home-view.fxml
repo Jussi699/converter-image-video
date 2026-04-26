@@ -14,37 +14,45 @@
       xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="media_multitool.HomeViewController">
 
-        <Label style="-fx-font-size: 30px; -fx-font-weight: bold;"
-               text="Media multitool"
-               textFill="WHITE" />
+    <Label style="-fx-font-size: 30px; -fx-font-weight: bold;"
+           text="Media multitool"
+           textFill="WHITE"/>
 
-        <Label prefWidth="520.0"
-               style="-fx-font-size: 16px;"
-               text="Select the type of media_multitool you want to use:"
-               textFill="#d6d6d6"
-               wrapText="true" />
+    <Label prefWidth="520.0"
+           style="-fx-font-size: 16px;"
+           text="Select the type of media_multitool you want to use:"
+           textFill="#d6d6d6"
+           wrapText="true"/>
 
-        <HBox spacing="20.0">
-            <Button mnemonicParsing="false"
-                    fx:id="btnOpenImageConverter"
-                    onAction="#onOpenImageConverterPressed"
-                    prefWidth="220.0"
-                    text="Image Converter" />
+    <HBox spacing="20.0">
+        <Button mnemonicParsing="false"
+                fx:id="btnOpenImageConverter"
+                onAction="#onOpenImageConverterPressed"
+                prefWidth="220.0"
+                text="Image Converter"/>
 
-            <Button mnemonicParsing="false"
-                    fx:id="btnOpenVideoConverter"
-                    onAction="#onOpenVideoConverterPressed"
-                    prefWidth="220.0"
-                    text="Video Converter" />
+        <Button mnemonicParsing="false"
+                fx:id="btnOpenVideoConverter"
+                onAction="#onOpenVideoConverterPressed"
+                prefWidth="220.0"
+                text="Video Converter"/>
+    </HBox>
 
-            <Button mnemonicParsing="false"
-                    fx:id="btnOpenMP3Converter"
-                    onAction="#onOpenMP3ConverterPressed"
-                    prefWidth="220.0"
-                    text="Audio Converter" />
-        </HBox>
+    <HBox spacing="20.0">
+        <Button mnemonicParsing="false"
+                fx:id="btnOpenAudioConverter"
+                onAction="#onOpenAudioConverterPressed"
+                prefWidth="220.0"
+                text="Audio Converter"/>
+
+        <Button mnemonicParsing="false"
+                fx:id="btnOpenImageCompressor"
+                onAction="#onOpenImageCompressorPressed"
+                prefWidth="220.0"
+                text="Audio Converter"/>
+    </HBox>
 
     <padding>
-        <Insets left="40.0" right="40.0" top="40.0" bottom="40.0" />
+        <Insets left="40.0" right="40.0" top="40.0" bottom="40.0"/>
     </padding>
 </VBox>

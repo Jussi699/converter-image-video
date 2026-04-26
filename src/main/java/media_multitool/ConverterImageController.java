@@ -5,6 +5,7 @@ import javafx.embed.swing.SwingFXUtils;
 import javafx.geometry.Pos;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 import model.converterImage.ConverterImage;
@@ -25,6 +26,8 @@ import java.io.IOException;
 import static model.converterImage.UsefulMethods.*;
 
 import viewHelp.Alerts;
+import viewHelp.Tooltips;
+
 import static viewHelp.Message.*;
 import static model.utility.Util.*;
 
@@ -380,10 +383,14 @@ public class ConverterImageController {
 
     public void ActionBtnToPGM() {
         selectRasterFormat("pgm");
-
     }
 
     public void ActionBtnToSVG() {
         selectRasterFormat("svg");
+    }
+
+    public void infoCompressorAction(MouseEvent mouseEvent) {
+        Tooltips.setupTooltipInfo(mouseEvent, "If you have any problems, go to \"Info\" page and write to me on Discord", 10);
+
     }
 }

@@ -5,6 +5,7 @@ import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.input.DragEvent;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
@@ -16,6 +17,7 @@ import model.utility.DragDropped;
 import model.utility.Item;
 import viewHelp.Alerts;
 import viewHelp.ComboBoxes;
+import viewHelp.Tooltips;
 
 import java.io.File;
 import java.util.List;
@@ -358,5 +360,9 @@ public class ConverterVideoController {
             loadFile(droppedFile);
          }
         }
+
+    public void infoCompressorAction(MouseEvent mouseEvent){
+        Tooltips.setupTooltipInfo(mouseEvent, "If you have any problems, go to \"Info\" page and write to me on Discord", 10);
     }
+}
 

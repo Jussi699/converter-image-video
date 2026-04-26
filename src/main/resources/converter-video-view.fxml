@@ -18,6 +18,9 @@
       style="-fx-background-color: #4b4b4b;" xmlns="http://javafx.com/javafx/17.0.12"
       xmlns:fx="http://javafx.com/fxml/1" fx:controller="media_multitool.ConverterVideoController">
 
+    <VBox managed="false">
+        <Button fx:id="btnInfoCompressor" onMouseClicked="#infoCompressorAction" translateY="10" translateX="5">i</Button>
+    </VBox>
 
     <Label alignment="CENTER"
            prefWidth="300.0"

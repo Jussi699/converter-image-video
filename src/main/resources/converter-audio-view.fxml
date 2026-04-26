@@ -4,8 +4,16 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<VBox alignment="TOP_CENTER" prefWidth="630.0" spacing="10.0" style="-fx-background-color: #4b4b4b;" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="media_multitool.ConverterAudioController">
 
+
+<VBox alignment="TOP_CENTER" prefWidth="630.0" spacing="10.0"
+      style="-fx-background-color: #4b4b4b;"
+      xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="media_multitool.ConverterAudioController">
+
+    <VBox managed="false">
+        <Button fx:id="btnInfoCompressor" onMouseClicked="#infoCompressorAction" translateY="10" translateX="5">i</Button>
+    </VBox>
 
     <Label alignment="CENTER" prefWidth="260.0"
            style="-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: RED"

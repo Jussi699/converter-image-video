@@ -1,5 +1,4 @@
 <configuration>
-    <!-- LOG_DIR устанавливается программно в Launcher.java в зависимости от ОС -->
     <property name="DEFAULT_LOG_DIR" value="logs"/>
     <variable name="ACTUAL_LOG_DIR" value="${LOG_DIR:-${DEFAULT_LOG_DIR}}"/>
 

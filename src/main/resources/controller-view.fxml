@@ -66,6 +66,16 @@
                 prefWidth="140.0"
                 text="Compressor Image"/>
 
+        <Line startX="85.0"
+              endX="85.0" endY="5.0"
+              stroke="red" strokeWidth="2.0" />
+
+        <Button fx:id="navInfo"
+                mnemonicParsing="false"
+                onAction="#showInfoPage"
+                prefWidth="140.0"
+                text="Info"/>
+
         <padding>
             <Insets left="14.0" right="14.0"/>
         </padding>
@@ -80,5 +90,6 @@
         <fx:include fx:id="converterVideoPage" source="converter-video-view.fxml"/>
         <fx:include fx:id="converterMP3Page" source="converter-audio-view.fxml"/>
         <fx:include fx:id="compressorImagePage" source="compressor-image-view.fxml"/>
+        <fx:include fx:id="infoPage" source="info-view.fxml"/>
     </StackPane>
 </HBox>

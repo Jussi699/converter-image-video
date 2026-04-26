@@ -10,6 +10,7 @@ public class ControllerView {
     @FXML private VBox homeView;
     @FXML private VBox converterImagePage;
     @FXML private VBox converterVideoPage;
+    @FXML private VBox infoPage;
     @FXML private VBox compressorImagePage;
     @FXML private HomeViewController homeViewController;
     @FXML private Button navHomeButton;
@@ -17,6 +18,8 @@ public class ControllerView {
     @FXML private Button navConverterVideoButton;
     @FXML private Button navConverterAudioButton;
     @FXML private Button navCompressorImage;
+    @FXML private Button navInfo;
+
 
     @FXML
     public void initialize() {
@@ -51,6 +54,11 @@ public class ControllerView {
         setActivePage(compressorImagePage, navCompressorImage);
     }
 
+    @FXML
+    public void showInfoPage() {
+        setActivePage(infoPage, navInfo);
+    }
+
     private void setActivePage(VBox pageToShow, Button activeButton) {
         homeView.setVisible(pageToShow == homeView);
         homeView.setManaged(pageToShow == homeView);
@@ -67,11 +75,15 @@ public class ControllerView {
         compressorImagePage.setVisible(pageToShow == compressorImagePage);
         compressorImagePage.setManaged(pageToShow == compressorImagePage);
 
+        infoPage.setVisible(pageToShow == infoPage);
+        infoPage.setManaged(pageToShow == infoPage);
+
         navHomeButton.setStyle(getNavButtonStyle(activeButton == navHomeButton));
         navConverterImageButton.setStyle(getNavButtonStyle(activeButton == navConverterImageButton));
         navConverterVideoButton.setStyle(getNavButtonStyle(activeButton == navConverterVideoButton));
         navConverterAudioButton.setStyle(getNavButtonStyle(activeButton == navConverterAudioButton));
         navCompressorImage.setStyle(getNavButtonStyle(activeButton == navCompressorImage));
+        navInfo.setStyle(getNavButtonStyle(activeButton == navInfo));
     }
 
     private String getNavButtonStyle(boolean active) {
