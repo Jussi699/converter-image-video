@@ -14,8 +14,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.*;
 import java.util.List;
+import java.util.Locale;
 import java.util.Base64;
 
 public class ConverterImage {
