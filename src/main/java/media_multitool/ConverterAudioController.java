@@ -150,7 +150,7 @@ public class ConverterAudioController {
     @FXML
     public void onSelectOutputDirectoryPressed() {
         Stage stage = getStage(btnChoiceDirForSaveMP3);
-        File selectedPath = setPathForSave(stage, outputPath);
+        File selectedPath = directoryChooser(stage, outputPath, "Select directory for save image");
         if(selectedPath != null) {
             outputPath = selectedPath;
         }

@@ -28,13 +28,19 @@
         <HBox alignment="CENTER" spacing="20.0">
             <Button fx:id="btnSelectPhotoFile"
                     mnemonicParsing="false"
-                    onAction="#ActionBtnSelectFile"
+                    onAction="#onActionBtnSelectFile"
                     prefWidth="180.0"
-                    text="Select image"/>
+                    text="Select image file"/>
 
-            <Button fx:id="btnChoiceDirForSaveImage"
+            <Button fx:id="btnSelectBathFileProcessing"
                     mnemonicParsing="false"
-                    onAction="#btnChoiceDirForSaveImage"
+                    onAction="#ActionBtnBathFileProcessing"
+                    prefWidth="180.0"
+                    text="Bath file processing"/>
+
+            <Button fx:id="btnChoiceFolderForSaveImage"
+                    mnemonicParsing="false"
+                    onAction="#btnChoiceFolderForSaveImage"
                     prefWidth="180.0"
                     text="Directory for save"/>
         </HBox>
@@ -103,6 +109,13 @@
         </HBox>
 
         <VBox alignment="CENTER" spacing="8.0">
+            <ProgressBar fx:id="progressBarConvert"
+                         prefWidth="460.0"
+                         minHeight="20.0"
+                         progress="0.0"
+                         visible="false"
+                         managed="false"/>
+
             <Label fx:id="labelSuccessConvert"
                    styleClass="labelSuccess"
                    alignment="CENTER"
@@ -117,7 +130,7 @@
 
             <VBox alignment="CENTER" spacing="10.0">
                 <Button mnemonicParsing="false"
-                        onAction="#SubmitConvertAndDownload"
+                        onAction="#onActionSubmitConvertAndDownload"
                         prefWidth="240.0"
                         text="Convert and Download"/>
             </VBox>

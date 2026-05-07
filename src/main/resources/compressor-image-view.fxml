@@ -30,7 +30,7 @@
                     mnemonicParsing="false"
                     onAction="#ActionBtnSelectFile"
                     prefWidth="180.0"
-                    text="Select image"/>
+                    text="Select image file"/>
 
             <Button fx:id="btnChoiceDirForSaveImage"
                     mnemonicParsing="false"

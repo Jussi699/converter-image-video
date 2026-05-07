@@ -19,7 +19,6 @@ import java.util.prefs.Preferences;
 import static org.apache.commons.io.FilenameUtils.getBaseName;
 
 public class Util {
-    private static final String KEY_OUTPUT_PATH = "last_output_path";
     private static final String KEY_INPUT_PATH = "last_input_path";
     private static final Preferences prefs = Preferences.userNodeForPackage(Util.class);
 
@@ -65,9 +64,7 @@ public class Util {
         String home = System.getProperty("user.home");
         File desktop = new File(home, "Desktop");
         String defaultPath = desktop.exists() ? desktop.getAbsolutePath() : home;
-        String savedPath = prefs.get(KEY_OUTPUT_PATH, defaultPath);
-        File file = new File(savedPath);
-        return (file.exists() && file.isDirectory()) ? file : new File(defaultPath);
+        return new File(defaultPath);
     }
 
     public static File getSavedInputPath() {
@@ -86,18 +83,16 @@ public class Util {
         }
     }
 
-    public static File setPathForSave(Stage stage, File currentDirectory) {
+    public static File directoryChooser(Stage stage, File currentDirectory, String title) {
         DirectoryChooser directoryChooser = new DirectoryChooser();
-        directoryChooser.setTitle("Select directory for saving");
+        directoryChooser.setTitle(title);
         File initialDirectory = resolveInitialDirectory(currentDirectory);
+
         if (initialDirectory != null) {
             directoryChooser.setInitialDirectory(initialDirectory);
         }
-        File selected = directoryChooser.showDialog(stage);
-        if (selected != null) {
-            prefs.put(KEY_OUTPUT_PATH, selected.getAbsolutePath());
-        }
-        return selected;
+
+        return directoryChooser.showDialog(stage);
     }
 
     public static File resolveInitialDirectory(File directory) {

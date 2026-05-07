@@ -28,7 +28,7 @@
                     mnemonicParsing="false"
                     onAction="#onActionBtnSelectVideoFile"
                     prefWidth="180.0"
-                    text="Select video"/>
+                    text="Select video file"/>
 
             <Button fx:id="btnChoiceDirForSaveVideo"
                     mnemonicParsing="false"

@@ -89,7 +89,7 @@ public class CompressorVideoController {
 
     public void onActionSelectOutputDir() {
         Stage stage = getStage(btnChoiceDirForSaveVideo);
-        File selectedPath = setPathForSave(stage, outputPath);
+        File selectedPath = directoryChooser(stage, outputPath, "Select directory for save image");
         if (selectedPath != null) {
             outputPath = selectedPath;
         }

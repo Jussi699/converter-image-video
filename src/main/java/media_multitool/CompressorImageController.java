@@ -121,7 +121,7 @@ public class CompressorImageController {
 
     public void btnChoiceDirForSaveImage() {
         Stage stage = getStage(btnChoiceDirForSaveImage);
-        File selectedPath = setPathForSave(stage, outputPath);
+        File selectedPath = directoryChooser(stage, outputPath, "Select directory for save image");
         if (selectedPath != null) {
             outputPath = selectedPath;
         }

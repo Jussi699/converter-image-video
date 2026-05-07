@@ -21,26 +21,32 @@ import model.select.SelectFile;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 import static model.converterImage.UsefulMethods.*;
 
+import model.utility.Preparation;
 import viewHelp.Alerts;
 import static viewHelp.Message.*;
 import static model.utility.Util.*;
 
 public class ConverterImageController {
     private final String ICO_PLACEHOLDER = "to ICO";
-
     private File image;
     private File outputPath;
+    private File path_folderBathProcessing;
     private String typeImage;
     private int sizeIcoImage;
+    private List<File> filesToProcess = new ArrayList<>();
     private final PauseTransition hideSuccessMessageTimer =
             new PauseTransition(Duration.seconds(5));
 
     @FXML private Button btnSelectPhotoFile;
-    @FXML private Button btnChoiceDirForSaveImage;
+    @FXML private Button btnChoiceFolderForSaveImage;
+    @FXML private Button btnSelectBathFileProcessing;
     @FXML private Label labelSuccessConvert;
+    @FXML private ProgressBar progressBarConvert;
     @FXML private Label labelSelectImage;
     @FXML private ToggleButton btnToSVG;
     @FXML private ToggleButton btnToWEBM;
@@ -61,7 +67,7 @@ public class ConverterImageController {
     @FXML
     public void initialize() {
         outputPath = getSavedPath();
-        btnChoiceDirForSaveImage.setTooltip(new Tooltip("Default directory: Desktop"));
+        btnChoiceFolderForSaveImage.setTooltip(new Tooltip("Default directory: Desktop"));
         imageContainer.setManaged(true);
         imageContainer.setAlignment(Pos.CENTER);
         scrollPanePhoto.setPannable(true);
@@ -73,7 +79,7 @@ public class ConverterImageController {
 
         labelSelectImage.setText("Selected image file: none");
 
-        comboBoxIcoSize.getItems().addAll("16", "32", "64", "128", "256");
+        comboBoxIcoSize.getItems().addAll("16", "32", "64", "128", "256", "512", "768");
         comboBoxIcoSize.setDisable(false);
         comboBoxIcoSize.setValue(ICO_PLACEHOLDER);
 
@@ -90,7 +96,7 @@ public class ConverterImageController {
         scrollPanePhoto.viewportBoundsProperty().addListener((_, _, _) -> updateImageSize());
         imageViewPhoto.imageProperty().addListener((_, _, _) -> updateImageSize());
 
-        setupClearMessageTimer(labelSuccessConvert, hideSuccessMessageTimer);
+        setupClearMessageTimer(labelSuccessConvert, progressBarConvert, hideSuccessMessageTimer);
         labelSuccessConvert.setText("Conversion status");
 
         comboBoxIcoSize.setButtonCell(new ListCell<>() {
@@ -148,14 +154,64 @@ public class ConverterImageController {
     }
 
     @FXML
-    public void btnChoiceDirForSaveImage() {
-        Stage stage = getStage(btnChoiceDirForSaveImage);
-        File selectedPath = setPathForSave(stage, outputPath);
+    private void btnChoiceFolderForSaveImage() {
+        Stage stage = getStage(btnChoiceFolderForSaveImage);
+        File selectedPath = directoryChooser(stage, outputPath, "Select directory for save image");
         if (selectedPath != null) {
             outputPath = selectedPath;
         }
     }
 
+    @FXML
+    private void ActionBtnBathFileProcessing() {
+        Stage stage = getStage(btnSelectBathFileProcessing);
+        File selectedPath = directoryChooser(stage, path_folderBathProcessing, "Select directory with image");
+        if (selectedPath == null) {
+            return;
+        }
+        path_folderBathProcessing = selectedPath;
+
+        List<File> result = Preparation.getFilesFromFolder(path_folderBathProcessing, "png", "jpg", "jpeg", "ico", "webp",
+                "tiff", "tif", "bmp", "ppm", "pgm", "pam", "jpe", "svg");
+
+        if (result == null) {
+            Alerts.alertDialog(Alert.AlertType.WARNING, "The list is empty", "The list is empty",
+                    "Unfortunately, the directory could not be read or is empty!");
+            return;
+        }
+
+        filesToProcess = new ArrayList<>(result);
+
+        if (filesToProcess.isEmpty()) {
+            Alerts.alertDialog(Alert.AlertType.WARNING, "No matching files found", "No matching files found",
+                    "No matching files were found in the selected directory.\nPerhaps it only contains unsupported images!");
+            return;
+        }
+
+        for (File s : filesToProcess) ErrorLogger.info("User selected file (image): " + s.getName());
+
+        image = filesToProcess.getFirst();
+        labelSelectImage.setText("Current file in list: " + image.getName());
+
+        try {
+            BufferedImage bi = readPreviewImage(image);
+            if (bi == null) {
+                ErrorLogger.warn("Failed to read preview for file: " + image.getName());
+                Alerts.alertDialog(Alert.AlertType.WARNING, "Error", "Format", "Unsupported image format!");
+                return;
+            }
+
+            Image fxImage = SwingFXUtils.toFXImage(bi, null);
+            imageScaleSlider.setValue(1.0);
+            imageViewPhoto.setImage(fxImage);
+
+            updateImageSize();
+            ErrorLogger.info("Preview loaded successfully for: " + image.getName());
+        } catch (IOException e) {
+            ErrorLogger.log(122, ErrorLogger.Level.ERROR, "IO | File error while loading preview", e);
+            Alerts.alertDialog(Alert.AlertType.WARNING, "Error", "IO", "File error!");
+        }
+    }
 
     @FXML
     private void onChoiceIcoSize() {
@@ -181,6 +237,8 @@ public class ConverterImageController {
     public void isPressedReset() {
         image = null;
         labelSelectImage.setText("Selected image file: none");
+        path_folderBathProcessing = null;
+        filesToProcess.clear();
         imageViewPhoto.setImage(null);
 
         btnToPNG.setSelected(false);
@@ -197,11 +255,12 @@ public class ConverterImageController {
 
         sizeIcoImage = 0;
         imageScaleSlider.setValue(1.0);
-        hideSuccessMessage(labelSuccessConvert, hideSuccessMessageTimer);
+        hideSuccessMessage(labelSuccessConvert, progressBarConvert, hideSuccessMessageTimer);
+        unlockButtonFormat();
     }
 
     @FXML
-    public void ActionBtnSelectFile() {
+    public void onActionBtnSelectFile() {
         SelectFile selectImageFile = new SelectFile();
         Stage stage = (Stage) btnSelectPhotoFile.getScene().getWindow();
         image = selectImageFile.choiceFile(stage,
@@ -209,6 +268,8 @@ public class ConverterImageController {
                         "*.tiff", "*.tif", "*.bmp", "*.ppm", "*.pgm", "*.pam", "*.jpe", "*.svg"),
                 "Choice image"
         );
+
+        filesToProcess.clear();
 
         if (image == null) return;
 
@@ -264,7 +325,7 @@ public class ConverterImageController {
     }
 
     @FXML
-    public void SubmitConvertAndDownload() {
+    public void onActionSubmitConvertAndDownload() {
         if (image == null || outputPath == null) {
             Alerts.alertDialog(Alert.AlertType.WARNING, "Warning", "File missing!", "Select image first.");
             return;
@@ -275,10 +336,41 @@ public class ConverterImageController {
             return;
         }
 
+        lockButtonFormat();
+        hideSuccessMessage(labelSuccessConvert, progressBarConvert, hideSuccessMessageTimer);
+
+        if (filesToProcess.isEmpty()) {
+            filesToProcess.add(image);
+        }
+
+        UsefulMethods usefulMethods = new UsefulMethods();
+        progressBarConvert.setVisible(true);
+        progressBarConvert.setManaged(true);
+        progressBarConvert.setProgress(0);
+
+        CompletableFuture.runAsync(() -> {
+            int total = filesToProcess.size();
+            for (int i = 0; i < total; i++) {
+                File img = filesToProcess.get(i);
+                executeConversion(img, usefulMethods);
+                final double progress = (double) (i + 1) / total;
+                Platform.runLater(() -> progressBarConvert.setProgress(progress));
+            }
+        }, IO_EXECUTOR).thenRun(() -> Platform.runLater(() -> {
+            unlockButtonFormat();
+            showProgressBar(progressBarConvert, hideSuccessMessageTimer);
+        })).exceptionally(e -> {
+            Platform.runLater(() -> {
+                unlockButtonFormat();
+                ErrorLogger.error("Async image conversion error: " + e.getMessage());
+            });
+            return null;
+        });
+    }
+
+    private void executeConversion(File image, UsefulMethods usefulMethods) {
         try {
-            hideSuccessMessage(labelSuccessConvert, hideSuccessMessageTimer);
             String inputExtension;
-            UsefulMethods usefulMethods = new UsefulMethods();
             try {
                 inputExtension = usefulMethods.normalizeFormat(DetermineType.determineFormat(image));
             } catch (Exception e) {
@@ -286,16 +378,10 @@ public class ConverterImageController {
             }
             String targetFormat = usefulMethods.normalizeFormat(typeImage);
 
-            if (inputExtension.equals(targetFormat)) {
-                Alerts.alertDialog(Alert.AlertType.WARNING, "Warning", "Format",
-                        "Source and target formats are the same (" + targetFormat + ").");
-                return;
-            }
-
             File convertedFile;
             if ("ico".equals(targetFormat)) {
                 if (sizeIcoImage <= 0) {
-                    Alerts.alertDialog(Alert.AlertType.WARNING, "Warning", "ICO Size", "Select ICO size.");
+                    Platform.runLater(() -> Alerts.alertDialog(Alert.AlertType.WARNING, "Warning", "ICO Size", "Select ICO size."));
                     return;
                 }
                 convertedFile = ConverterImage.convertToIco(image, outputPath, sizeIcoImage);
@@ -306,27 +392,35 @@ public class ConverterImageController {
                 convertedFile = ConverterImage.convert(image, outputPath, targetFormat);
             }
             if (convertedFile.exists() && convertedFile.isFile() && convertedFile.length() > 0) {
-                showSuccessMessage(labelSuccessConvert, targetFormat, hideSuccessMessageTimer);
+                Platform.runLater(() -> showSuccessMessage(labelSuccessConvert, targetFormat, hideSuccessMessageTimer));
                 ErrorLogger.info("Conversion completed: " + convertedFile.getName());
             } else {
                 ErrorLogger.warn("Conversion finished but file not found or empty: " + convertedFile.getName());
-                showErrorMessage(labelSuccessConvert, "Conversion Failed: File missing", hideSuccessMessageTimer);
-                Alerts.alertDialog(Alert.AlertType.WARNING, "Warning", "Missing File",
-                        "Conversion finished, but saved file was not found.");
+                Platform.runLater(() -> {
+                    showErrorMessage(labelSuccessConvert, progressBarConvert, "Conversion Failed: File missing", hideSuccessMessageTimer);
+                    Alerts.alertDialog(Alert.AlertType.WARNING, "Warning", "Missing File",
+                            "Conversion finished, but saved file was not found.");
+                });
             }
 
         } catch (IllegalArgumentException e) {
             ErrorLogger.log(119, ErrorLogger.Level.WARN, "Invalid parameters for conversion", e);
-            showErrorMessage(labelSuccessConvert, "Error: Invalid parameters", hideSuccessMessageTimer);
-            Alerts.alertDialog(Alert.AlertType.WARNING, "Warning", "Invalid Parameters", e.getMessage());
+            Platform.runLater(() -> {
+                showErrorMessage(labelSuccessConvert, progressBarConvert, "Error: Invalid parameters", hideSuccessMessageTimer);
+                Alerts.alertDialog(Alert.AlertType.WARNING, "Warning", "Invalid Parameters", e.getMessage());
+            });
         } catch (IOException e) {
             ErrorLogger.log(105, ErrorLogger.Level.ERROR, "IO Error during conversion", e);
-            showErrorMessage(labelSuccessConvert, "Error: " + e.getMessage(), hideSuccessMessageTimer);
-            Alerts.alertDialog(Alert.AlertType.ERROR, "Error", "Conversion Failed", e.getMessage());
+            Platform.runLater(() -> {
+                showErrorMessage(labelSuccessConvert, progressBarConvert, "Error: " + e.getMessage(), hideSuccessMessageTimer);
+                Alerts.alertDialog(Alert.AlertType.ERROR, "Error", "Conversion Failed", e.getMessage());
+            });
         } catch (Exception e) {
             ErrorLogger.log(1001, ErrorLogger.Level.ERROR, "Unexpected error during conversion", e);
-            showErrorMessage(labelSuccessConvert, "System Error: " + e.getMessage(), hideSuccessMessageTimer);
-            Alerts.alertDialog(Alert.AlertType.ERROR, "Error", "System Error", "Something went wrong: " + e.getMessage());
+            Platform.runLater(() -> {
+                showErrorMessage(labelSuccessConvert, progressBarConvert, "System Error: " + e.getMessage(), hideSuccessMessageTimer);
+                Alerts.alertDialog(Alert.AlertType.ERROR, "Error", "System Error", "Something went wrong: " + e.getMessage());
+            });
         }
     }
 
@@ -341,7 +435,6 @@ public class ConverterImageController {
         btnToPGM.setSelected("pgm".equals(format));
         btnToPAM.setSelected("pam".equals(format));
         btnToSVG.setSelected("svg".equals(format));
-
 
         comboBoxIcoSize.setValue(ICO_PLACEHOLDER);
     }
@@ -381,27 +474,53 @@ public class ConverterImageController {
         selectRasterFormat("pgm");
 
     }
-@FXML
-private void ActionBtnToSVG() {
-    selectRasterFormat("svg");
-}
+    @FXML
+    private void ActionBtnToSVG() {
+        selectRasterFormat("svg");
+    }
 
-@FXML
-private void showInfo() {
-    Alerts.alertDialog(
-            Alert.AlertType.INFORMATION,
-            "Information",
-            "Image Converter",
-            """
-                    How to use:
-                    1. Select an image file using 'Select image'.
-                    2. (Optional) Choose a directory for saving the output.
-                    3. Select the target format (PNG, JPEG, etc.).
-                    4. Click 'Convert and Download'.
-                    
-                    You can also zoom the preview using the slider or mouse wheel.
-                    
-                    If you have any questions or problems, please go to Info and write to me on Discord."""
-    );
-}
+    @FXML
+    private void showInfo() {
+        Alerts.alertDialog(
+                Alert.AlertType.INFORMATION,
+                "Information",
+                "Image Converter",
+                """
+                        How to use:
+                        1. Select an image file using 'Select image'.
+                        2. (Optional) Choose a directory for saving the output.
+                        3. Select the target format (PNG, JPEG, etc.).
+                        4. Click 'Convert and Download'.
+                        
+                        You can also zoom the preview using the slider or mouse wheel.
+                        
+                        If you have any questions or problems, please go to Info and write to me on Discord."""
+        );
+    }
+
+    private void lockButtonFormat() {
+        btnToPNG.setDisable(true);
+        btnToJPEG.setDisable(true);
+        btnToWEBM.setDisable(true);
+        btnToTIFF.setDisable(true);
+        btnToBMP.setDisable(true);
+        btnToPPM.setDisable(true);
+        btnToPGM.setDisable(true);
+        btnToPAM.setDisable(true);
+        btnToSVG.setDisable(true);
+        comboBoxIcoSize.setDisable(true);
+    }
+
+    private void unlockButtonFormat() {
+        btnToPNG.setDisable(false);
+        btnToJPEG.setDisable(false);
+        btnToWEBM.setDisable(false);
+        btnToTIFF.setDisable(false);
+        btnToBMP.setDisable(false);
+        btnToPPM.setDisable(false);
+        btnToPGM.setDisable(false);
+        btnToPAM.setDisable(false);
+        btnToSVG.setDisable(false);
+        comboBoxIcoSize.setDisable(false);
+    }
 }

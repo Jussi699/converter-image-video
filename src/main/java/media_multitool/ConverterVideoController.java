@@ -182,7 +182,7 @@ public class ConverterVideoController {
     @FXML
     public void onSelectOutputDirectoryPressed() {
         Stage stage = (Stage) btnChoiceDirForSaveVideo.getScene().getWindow();
-        File selectedPath = setPathForSave(stage, outputPath);
+        File selectedPath = directoryChooser(stage, outputPath, "Select directory for save image");
         if (selectedPath != null) {
             outputPath = selectedPath;
             hideSuccessMessage(labelSuccessConvert, hideSuccessMessageTimer);
