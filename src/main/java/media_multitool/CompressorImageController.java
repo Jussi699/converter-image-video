@@ -23,6 +23,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import javafx.application.Platform;
 
@@ -91,30 +92,30 @@ public class CompressorImageController {
         );
     }
     
+    @FXML
     public void ActionBtnSelectFile() {
         SelectFile selectImageFile = new SelectFile();
         Stage stage = (Stage) btnSelectPhotoFile.getScene().getWindow();
-        imageProperties.setImage(selectImageFile.choiceFile(stage,
+        selectImageFile.choiceFile(stage,
                 new FileChooser.ExtensionFilter("Images", "*.png", "*.jpg", "*.jpeg", "*.webp",
                         "*.tiff", "*.tif", "*.bmp", "*.ppm", "*.pgm", "*.pam", "*.jpe", "*.svg"),
                 "Choice image"
-        ));
+        ).ifPresent(imageProperties::setImage);
 
         if (imageProperties.getImage() == null) return;
 
         ErrorLogger.info("User selected file (image): " + imageProperties.getImage().getAbsolutePath());
-        imageProperties.setTypeImage(DetermineType.determineFormat(imageProperties.getImage()));
+        imageProperties.setTypeImage(DetermineType.determineFormat(imageProperties.getImage()).orElse(null));
         labelSelectImageName.setText("Select image: " + imageProperties.getImage().getName());
         loadPreview(imageProperties.getImage(), imageViewPhotoOriginal, scrollPanePhotoOriginal, imageContainerOriginal);
         clearCompressedPreview();
     }
 
+    @FXML
     public void btnChoiceDirForSaveImage() {
         Stage stage = getStage(btnChoiceDirForSaveImage);
-        File selectedPath = directoryChooser(stage, imageProperties.getOutput(), "Select directory for save image");
-        if (selectedPath != null) {
-            imageProperties.setOutput(selectedPath);
-        }
+        directoryChooser(stage, imageProperties.getOutput(), "Select directory for save image")
+                .ifPresent(imageProperties::setOutput);
     }
 
     public void submitCompressAndDownload() {
@@ -152,16 +153,17 @@ public class CompressorImageController {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-        }, IO_EXECUTOR).thenAccept(compressionResult -> Platform.runLater(() -> {
+        }, IO_EXECUTOR).thenAccept(compressionResultOpt -> Platform.runLater(() -> {
             btnSelectPhotoFile.setDisable(false);
             btnChoiceDirForSaveImage.setDisable(false);
 
-            if (compressionResult == null) {
+            if (compressionResultOpt.isEmpty()) {
                 showErrorMessage(labelSuccessConvert, "So close, yet no success", imageProperties.getHideSuccessMessageTimer());
                 ErrorLogger.warn("Compressed image has null! " + getClass().getName());
                 return;
             }
 
+            CompressionResult compressionResult = compressionResultOpt.get();
             imageProperties.setCompressedImage(compressionResult.outputFile());
             if (!compressionResult.sizeReduced()) {
                 imageProperties.setCompressedImage(null);
@@ -246,12 +248,14 @@ public class CompressorImageController {
         );
     }
 
+    @FXML
     public void onChoiceScaleImage() {
         Item selectedItem = comboBoxScaleImage.getValue();
         imageProperties.setScale((selectedItem != null) ? selectedItem.id() : -1);
         ErrorLogger.info("User select scale: " + imageProperties.getScale());
     }
 
+    @FXML
     public void onChoiceOutputQuality() {
         Item selectedItem = comboBoxOutputQuality.getValue();
         imageProperties.setQuality((selectedItem != null) ? selectedItem.id() : -1);
@@ -291,13 +295,13 @@ public class CompressorImageController {
 
     private void loadPreview(File file, ImageView imageView, ScrollPane scrollPane, StackPane container) {
         try {
-            BufferedImage bufferedImage = readPreviewImage(file);
-            if (bufferedImage == null) {
+            Optional<BufferedImage> bufferedImageOpt = readPreviewImage(file);
+            if (bufferedImageOpt.isEmpty()) {
                 clearPreview(imageView, container);
                 return;
             }
 
-            Image fxImage = SwingFXUtils.toFXImage(bufferedImage, null);
+            Image fxImage = SwingFXUtils.toFXImage(bufferedImageOpt.get(), null);
             imageView.setImage(fxImage);
             updatePreviewSize(scrollPane, container, imageView);
         } catch (IOException e) {

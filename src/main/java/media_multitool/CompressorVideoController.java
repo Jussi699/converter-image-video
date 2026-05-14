@@ -63,18 +63,20 @@ public class CompressorVideoController {
         btnSuperCompress.setToggleGroup(group);
     }
 
+    @FXML
     public void onActionBtnSelectVideoFile() {
         SelectFile selectImageFile = new SelectFile();
         Stage stage = (Stage) btnSelectVideoFile.getScene().getWindow();
-        videoProperties.setSrcFile(selectImageFile.choiceFile(stage,
-                new FileChooser.ExtensionFilter("Video", "*.mp4", "*.avi", "*.mkv", "*.mov", "*.webm"), "Select video"));
+        selectImageFile.choiceFile(stage,
+                new FileChooser.ExtensionFilter("Video", "*.mp4", "*.avi", "*.mkv", "*.mov", "*.webm"), "Select video")
+                .ifPresent(videoProperties::setSrcFile);
 
         if (videoProperties.getSrcFile() == null) return;
 
         ErrorLogger.info("User selected file (video): " + videoProperties.getSrcFile().getAbsolutePath());
         labelSelectVideoName.setText("Select video: " + videoProperties.getSrcFile().getName());
         
-        adaptivePresets = VideoPresets.createAdaptivePresets(videoProperties.getSrcFile());
+        adaptivePresets = VideoPresets.createAdaptivePresets(videoProperties.getSrcFile()).orElse(null);
         if (adaptivePresets != null) {
             ErrorLogger.info("Adaptive presets created successfully for: " + videoProperties.getSrcFile().getName());
         } else {
@@ -83,14 +85,14 @@ public class CompressorVideoController {
         }
     }
 
+    @FXML
     public void onActionSelectOutputDir() {
         Stage stage = getStage(btnChoiceDirForSaveVideo);
-        File selectedPath = directoryChooser(stage, videoProperties.getOutput(), "Select directory for save image");
-        if (selectedPath != null) {
-            videoProperties.setOutput(selectedPath);
-        }
+        directoryChooser(stage, videoProperties.getOutput(), "Select directory for save image")
+                .ifPresent(videoProperties::setOutput);
     }
 
+    @FXML
     public void onActionCompressAndDownload() {
         if (!checkChoicePreset()) {
             Alerts.alertDialog(Alert.AlertType.WARNING, "Unselected preset option!", "Unselected preset option!",
@@ -115,8 +117,8 @@ public class CompressorVideoController {
         progressBarCompress.setProgress(0);
 
         CompletableFuture.supplyAsync(() -> getMetadata(videoProperties.getSrcFile()), IO_EXECUTOR)
-                .thenCompose(info -> {
-                    if (info != null && info.getAudio() == null) {
+                .thenCompose(infoOpt -> {
+                    if (infoOpt.isPresent() && infoOpt.get().getAudio() == null) {
                         CompletableFuture<Boolean> proceedFuture = new CompletableFuture<>();
                         Platform.runLater(() -> {
                             boolean proceed = Alerts.confirmationDialog(
@@ -167,7 +169,7 @@ public class CompressorVideoController {
             try {
                 Compressor.getCodec(videoProperties.getSrcFile());
                 File finalFileOutput = new File(videoProperties.getOutput(), videoProperties.getSrcFile().getName() + UUID.randomUUID().toString().replace("-", "") +
-                        "." + DetermineType.determineFormat(videoProperties.getSrcFile()));
+                        "." + DetermineType.determineFormat(videoProperties.getSrcFile()).orElse("mp4"));
 
                 Compressor.compress(videoProperties.getSrcFile(), finalFileOutput,
                         selectedPreset.video(), selectedPreset.audio(), progress -> Platform.runLater(() -> progressBarCompress.setProgress(progress))) ;
@@ -179,6 +181,7 @@ public class CompressorVideoController {
         }, IO_EXECUTOR);
     }
 
+    @FXML
     public void onActionPressedReset() {
         btnBasicCompress.setSelected(false);
         btnStrongCompress.setSelected(false);
@@ -203,6 +206,7 @@ public class CompressorVideoController {
         return btnBasicCompress.isSelected() || btnStrongCompress.isSelected() || btnSuperCompress.isSelected();
     }
 
+    @FXML
     public void onActionSelectPreset(ActionEvent actionEvent) {
         Object source = actionEvent.getSource();
 
@@ -261,7 +265,7 @@ public class CompressorVideoController {
 
     private void loadFile(File selectedFile) {
         videoProperties.setSrcFile(selectedFile);
-        adaptivePresets = VideoPresets.createAdaptivePresets(videoProperties.getSrcFile());
+        adaptivePresets = VideoPresets.createAdaptivePresets(videoProperties.getSrcFile()).orElse(null);
         if (adaptivePresets != null) {
             ErrorLogger.info("Adaptive presets created successfully for: " + videoProperties.getSrcFile().getName());
         } else {
@@ -271,7 +275,7 @@ public class CompressorVideoController {
         labelSelectVideoName.setText("Selected file: " + videoProperties.getSrcFile().getName() + " (Loading info...)");
 
         CompletableFuture.supplyAsync(() -> getMetadata(videoProperties.getSrcFile()))
-                .thenAccept(info -> Platform.runLater(() -> updateLabelFromMetadata(info)));
+                .thenAccept(infoOpt -> Platform.runLater(() -> updateLabelFromMetadata(infoOpt.orElse(null))));
 
         hideSuccessMessage(labelSuccessCompress, videoProperties.getHideSuccessMessageTimer());
 
@@ -286,14 +290,14 @@ public class CompressorVideoController {
     private void updateLabelFromMetadata(ws.schild.jave.info.MultimediaInfo info) {
         if (info == null || videoProperties.getSrcFile() == null) return;
 
-        String res = parseResolution(info);
+        String res = parseResolution(info).orElse("N/A");
         int f = parseFps(info);
         int vbr = parseVideoBitrate(info);
         int abr = parseAudioBitrate(info);
 
         String infoText = String.format("Selected file: %s [%s, %d fps, V:%d kbps, A:%d kbps]",
                 videoProperties.getSrcFile().getName(),
-                (res != null ? res : "N/A"),
+                res,
                 f, vbr, abr);
 
         labelSelectVideoName.setText(infoText);

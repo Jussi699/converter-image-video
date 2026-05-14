@@ -20,6 +20,6 @@ public class Preparation {
             return new ArrayList<>(Arrays.asList(matches));
         }
 
-        return null;
+        return new ArrayList<>();
     }
 }

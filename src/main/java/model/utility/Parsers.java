@@ -2,6 +2,7 @@ package model.utility;
 
 import javafx.scene.control.ComboBox;
 import ws.schild.jave.info.MultimediaInfo;
+import java.util.Optional;
 
 public class Parsers {
     public static int parseComboBoxStringToInt(ComboBox<String> cb) {
@@ -37,11 +38,11 @@ public class Parsers {
         return -1;
     }
 
-    public static String parseResolution(MultimediaInfo info) {
+    public static Optional<String> parseResolution(MultimediaInfo info) {
         if (info != null && info.getVideo() != null && info.getVideo().getSize() != null) {
-            return info.getVideo().getSize().getWidth() + "x" + info.getVideo().getSize().getHeight();
+            return Optional.of(info.getVideo().getSize().getWidth() + "x" + info.getVideo().getSize().getHeight());
         }
-        return null;
+        return Optional.empty();
     }
 
     public static int parseFps(MultimediaInfo info) {

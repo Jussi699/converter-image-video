@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Locale;
+import java.util.Optional;
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -26,8 +27,8 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
 public class Compressor {
-    public static CompressionResult compressorStandardImage(ImageProperties imageProperties) {
-        String format = normalizeFormat(DetermineType.determineFormat(imageProperties.getImage()));
+    public static Optional<CompressionResult> compressorStandardImage(ImageProperties imageProperties) {
+        String format = normalizeFormat(DetermineType.determineFormat(imageProperties.getImage()).orElse(""));
         File outputFile = Util.createOutputFile(imageProperties.getImage(), imageProperties.getOutput(), format);
         long originalSize = imageProperties.getImage().length();
 
@@ -63,7 +64,7 @@ public class Compressor {
 
             long compressedSize = outputFile.length();
             if (compressedSize <= 0) {
-                return null;
+                return Optional.empty();
             }
 
             if (compressedSize >= originalSize && !outputFile.delete()) {
@@ -71,14 +72,14 @@ public class Compressor {
                         + outputFile.getAbsolutePath());
             }
 
-            return new CompressionResult(outputFile, format, originalSize, compressedSize, compressedSize < originalSize);
+            return Optional.of(new CompressionResult(outputFile, format, originalSize, compressedSize, compressedSize < originalSize));
         } catch (IOException e) {
             ErrorLogger.log(115, ErrorLogger.Level.ERROR, "Failed to compress image", e);
-            return null;
+            return Optional.empty();
         }
     }
 
-    public static CompressionResult removeSvgMetadata(ImageProperties imageProperties) throws IOException {
+    public static Optional<CompressionResult> removeSvgMetadata(ImageProperties imageProperties) throws IOException {
         File outputFile = Util.createOutputFile(imageProperties.getImage(), imageProperties.getOutput(), "svg");
         long originalSize = imageProperties.getImage().length();
 
@@ -88,7 +89,7 @@ public class Compressor {
 
             long compressedSize = outputFile.length();
             if (compressedSize <= 0) {
-                return null;
+                return Optional.empty();
             }
 
             if (compressedSize >= originalSize && !outputFile.delete()) {
@@ -97,7 +98,7 @@ public class Compressor {
             }
 
             boolean sizeReduced = compressedSize < originalSize;
-            return new CompressionResult(outputFile, "svg", originalSize, compressedSize, sizeReduced);
+            return Optional.of(new CompressionResult(outputFile, "svg", originalSize, compressedSize, sizeReduced));
         } catch (IOException e) {
             ErrorLogger.log(117, ErrorLogger.Level.ERROR, "SVG metadata removal error", e);
             throw e;

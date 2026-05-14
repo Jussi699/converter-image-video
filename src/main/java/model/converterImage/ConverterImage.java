@@ -172,12 +172,8 @@ public class ConverterImage {
     }
 
     private static BufferedImage readImage(File image) throws IOException {
-        BufferedImage bufferedImage = UsefulMethods.readPreviewImage(image);
-        if (bufferedImage == null) {
-            throw new IOException("Unable to read image: " + image.getName());
-        }
-
-        return bufferedImage;
+        return UsefulMethods.readPreviewImage(image)
+                .orElseThrow(() -> new IOException("Unable to read image: " + image.getName()));
     }
 
     private static String getBaseName(String fileName) {

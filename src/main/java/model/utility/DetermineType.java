@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Iterator;
 import java.util.Locale;
+import java.util.Optional;
 
 public class DetermineType {
     public static String determineFormatImage(File file) throws IOException {
@@ -36,9 +37,9 @@ public class DetermineType {
         }
     }
 
-    public static String determineFormat(File file) {
+    public static Optional<String> determineFormat(File file) {
         if (file == null) {
-            return null;
+            return Optional.empty();
         }
 
         try {
@@ -46,12 +47,12 @@ public class DetermineType {
             if (type != null && type.contains("/")) {
                 String format = type.split("/")[1].toLowerCase();
                 if ("svg+xml".equals(format)) {
-                    return "svg";
+                    return Optional.of("svg");
                 }
                 if ("x-icon".equals(format) || "vnd.microsoft.icon".equals(format)) {
-                    return "ico";
+                    return Optional.of("ico");
                 }
-                return format;
+                return Optional.of(format);
             }
         } catch (IOException e) {
             ErrorLogger.warn("Unable to determine file type!");
@@ -59,11 +60,11 @@ public class DetermineType {
         }
 
         try {
-            return determineFormatImage(file).toLowerCase();
+            return Optional.of(determineFormatImage(file).toLowerCase());
         } catch (IOException e) {
             ErrorLogger.warn("Unable to determine image format via ImageIO, fallback to extension.");
             ErrorLogger.log(114, ErrorLogger.Level.WARN, "Image format detection fallback", e);
-            return getExtensionByString(file.getName());
+            return Optional.of(getExtensionByString(file.getName()));
         }
     }
 

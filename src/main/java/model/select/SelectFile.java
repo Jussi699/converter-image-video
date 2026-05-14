@@ -4,6 +4,7 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 import java.io.File;
+import java.util.Optional;
 
 import static model.utility.Util.*;
 
@@ -11,13 +12,10 @@ public class SelectFile extends AbstractSelectFile {
     private final FileChooser fileChooser = new FileChooser();
 
     @Override
-    public File choiceFile(Stage stage, FileChooser.ExtensionFilter filter, String title) {
+    public Optional<File> choiceFile(Stage stage, FileChooser.ExtensionFilter filter, String title) {
         fileChooser.setTitle(title);
         
-        File initialDirectory = resolveInitialDirectory(getSavedInputPath());
-        if (initialDirectory != null) {
-            fileChooser.setInitialDirectory(initialDirectory);
-        }
+        resolveInitialDirectory(getSavedInputPath()).ifPresent(fileChooser::setInitialDirectory);
 
         fileChooser.getExtensionFilters().setAll(filter);
 
@@ -26,6 +24,6 @@ public class SelectFile extends AbstractSelectFile {
             saveInputPath(selectedFile);
         }
         
-        return selectedFile;
+        return Optional.ofNullable(selectedFile);
     }
 }

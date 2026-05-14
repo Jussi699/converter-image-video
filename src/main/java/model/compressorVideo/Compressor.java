@@ -104,7 +104,7 @@ public class Compressor {
     }
 
     public static void getCodec(File videoFile) {
-        String formatVideo = DetermineType.determineFormat(videoFile);
+        String formatVideo = DetermineType.determineFormat(videoFile).orElse("");
         switch (formatVideo) {
             case "mp4", "m4v" -> {
                 videoCodec = useGPU ? "h264_nvenc" : "libx264";

@@ -21,6 +21,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import static model.converterImage.UsefulMethods.*;
@@ -147,63 +148,54 @@ public class ConverterImageController {
     }
 
     @FXML
-    private void btnChoiceFolderForSaveImage() {
+    public void btnChoiceFolderForSaveImage() {
         Stage stage = getStage(btnChoiceFolderForSaveImage);
-        File selectedPath = directoryChooser(stage, imageProperties.getOutput(), "Select directory for save image");
-        if (selectedPath != null) {
-            imageProperties.setOutput(selectedPath);
-        }
+        directoryChooser(stage, imageProperties.getOutput(), "Select directory for save image")
+                .ifPresent(imageProperties::setOutput);
     }
 
     @FXML
     private void onActionBtnBatchFileProcessing() {
         Stage stage = getStage(btnSelectBatchFileProcessing);
-        File selectedPath = directoryChooser(stage, path_folderBatchProcessing, "Select directory with image");
-        if (selectedPath == null) {
-            return;
-        }
-        path_folderBatchProcessing = selectedPath;
+        directoryChooser(stage, path_folderBatchProcessing, "Select directory with image")
+                .ifPresent(selectedPath -> {
+                    path_folderBatchProcessing = selectedPath;
 
-        List<File> result = Preparation.getFilesFromFolder(path_folderBatchProcessing, "png", "jpg", "jpeg", "ico", "webp",
-                "tiff", "tif", "bmp", "ppm", "pgm", "pam", "jpe", "svg");
+                    List<File> result = Preparation.getFilesFromFolder(path_folderBatchProcessing, "png", "jpg", "jpeg", "ico", "webp",
+                            "tiff", "tif", "bmp", "ppm", "pgm", "pam", "jpe", "svg");
 
-        if (result == null) {
-            Alerts.alertDialog(Alert.AlertType.WARNING, "The list is empty", "The list is empty",
-                    "Unfortunately, the directory could not be read or is empty!");
-            return;
-        }
+                    filesToProcess = new ArrayList<>(result);
 
-        filesToProcess = new ArrayList<>(result);
+                    if (filesToProcess.isEmpty()) {
+                        Alerts.alertDialog(Alert.AlertType.WARNING, "No matching files found", "No matching files found",
+                                "No matching files were found in the selected directory.\nPerhaps it only contains unsupported images!");
+                        return;
+                    }
 
-        if (filesToProcess.isEmpty()) {
-            Alerts.alertDialog(Alert.AlertType.WARNING, "No matching files found", "No matching files found",
-                    "No matching files were found in the selected directory.\nPerhaps it only contains unsupported images!");
-            return;
-        }
+                    for (File s : filesToProcess) ErrorLogger.info("User selected file (image): " + s.getName());
 
-        for (File s : filesToProcess) ErrorLogger.info("User selected file (image): " + s.getName());
+                    imageProperties.setImage(filesToProcess.getFirst());
+                    labelSelectImage.setText("Current file in list: " + imageProperties.getImage().getName());
 
-        imageProperties.setImage(filesToProcess.getFirst());
-        labelSelectImage.setText("Current file in list: " + imageProperties.getImage().getName());
+                    try {
+                        Optional<BufferedImage> biOpt = readPreviewImage(imageProperties.getImage());
+                        if (biOpt.isEmpty()) {
+                            ErrorLogger.warn("Failed to read preview for file: " + imageProperties.getImage().getName());
+                            Alerts.alertDialog(Alert.AlertType.WARNING, "Error", "Format", "Unsupported image format!");
+                            return;
+                        }
 
-        try {
-            BufferedImage bi = readPreviewImage(imageProperties.getImage());
-            if (bi == null) {
-                ErrorLogger.warn("Failed to read preview for file: " + imageProperties.getImage().getName());
-                Alerts.alertDialog(Alert.AlertType.WARNING, "Error", "Format", "Unsupported image format!");
-                return;
-            }
+                        Image fxImage = SwingFXUtils.toFXImage(biOpt.get(), null);
+                        imageScaleSlider.setValue(1.0);
+                        imageViewPhoto.setImage(fxImage);
+                        updateImageSize();
 
-            Image fxImage = SwingFXUtils.toFXImage(bi, null);
-            imageScaleSlider.setValue(1.0);
-            imageViewPhoto.setImage(fxImage);
-            updateImageSize();
-
-            ErrorLogger.info("Preview loaded successfully for: " + imageProperties.getImage().getName());
-        } catch (IOException e) {
-            ErrorLogger.log(122, ErrorLogger.Level.ERROR, "IO | File error while loading preview", e);
-            Alerts.alertDialog(Alert.AlertType.WARNING, "Error", "IO", "File error!");
-        }
+                        ErrorLogger.info("Preview loaded successfully for: " + imageProperties.getImage().getName());
+                    } catch (IOException e) {
+                        ErrorLogger.log(122, ErrorLogger.Level.ERROR, "IO | File error while loading preview", e);
+                        Alerts.alertDialog(Alert.AlertType.WARNING, "Error", "IO", "File error!");
+                    }
+                });
     }
 
     @FXML
@@ -255,11 +247,11 @@ public class ConverterImageController {
     public void onActionBtnSelectFile() {
         SelectFile selectImageFile = new SelectFile();
         Stage stage = (Stage) btnSelectPhotoFile.getScene().getWindow();
-        imageProperties.setImage(selectImageFile.choiceFile(stage,
+        selectImageFile.choiceFile(stage,
                 new FileChooser.ExtensionFilter("Images", "*.png", "*.jpg", "*.jpeg", "*.ico", "*.webp",
                         "*.tiff", "*.tif", "*.bmp", "*.ppm", "*.pgm", "*.pam", "*.jpe", "*.svg"),
                 "Choice image"
-        ));
+        ).ifPresent(imageProperties::setImage);
 
         filesToProcess.clear();
 
@@ -269,14 +261,14 @@ public class ConverterImageController {
         labelSelectImage.setText("Select image: " + imageProperties.getImage().getName());
 
         try {
-            BufferedImage bi = readPreviewImage(imageProperties.getImage());
-            if (bi == null) {
+            Optional<BufferedImage> biOpt = readPreviewImage(imageProperties.getImage());
+            if (biOpt.isEmpty()) {
                 ErrorLogger.warn("Failed to read preview for file: " + imageProperties.getImage().getName());
                 Alerts.alertDialog(Alert.AlertType.ERROR, "Error", "Format", "Unsupported image format!");
                 return;
             }
 
-            Image fxImage = SwingFXUtils.toFXImage(bi, null);
+            Image fxImage = SwingFXUtils.toFXImage(biOpt.get(), null);
             imageScaleSlider.setValue(1.0);
             imageViewPhoto.setImage(fxImage);
 
@@ -394,7 +386,7 @@ public class ConverterImageController {
         try {
             String inputExtension;
             try {
-                inputExtension = usefulMethods.normalizeFormat(DetermineType.determineFormat(image));
+                inputExtension = usefulMethods.normalizeFormat(DetermineType.determineFormat(image).orElse(null));
             } catch (Exception e) {
                 inputExtension = usefulMethods.normalizeFormat(getFileExtension(image));
             }
@@ -481,22 +473,27 @@ public class ConverterImageController {
         selectRasterFormat("webp");
     }
 
+    @FXML
     public void ActionBtnToTIFF() {
         selectRasterFormat("tif");
     }
 
+    @FXML
     public void ActionBtnToBMP() {
         selectRasterFormat("bmp");
     }
 
+    @FXML
     public void ActionBtnToPPM() {
         selectRasterFormat("ppm");
     }
 
+    @FXML
     public void ActionBtnToPAM() {
         selectRasterFormat("pam");
     }
 
+    @FXML
     public void ActionBtnToPGM() {
         selectRasterFormat("pgm");
     }

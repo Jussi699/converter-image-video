@@ -21,6 +21,7 @@ import model.logger.ErrorLogger;
 import model.properties.VideoAndAudioProperties;
 import model.select.SelectFile;
 import model.utility.DragDropped;
+import ws.schild.jave.info.MultimediaInfo;
 import viewHelp.Alerts;
 
 import java.io.File;
@@ -113,16 +114,12 @@ public class ConverterAudioController {
     public void onSelectAudioVideoPressed() {
         SelectFile selectAudioVideoFile = new SelectFile();
         Stage stage = (Stage) btnSelectAudioVideoFile.getScene().getWindow();
-        File selectedFile = selectAudioVideoFile.choiceFile(stage,
+        selectAudioVideoFile.choiceFile(stage,
                 new FileChooser.ExtensionFilter("All Media Files",
                         "*.mp3", "*.wav", "*.ogg", "*.flac", "*.m4a", "*.aac", "*.wma",
                         "*.mp4", "*.avi", "*.mkv", "*.mov", "*.flv", "*.wmv"),
                     "Choice video/audio file"
-                );
-
-        if(selectedFile != null) {
-            loadFile(selectedFile);
-        }
+                ).ifPresent(this::loadFile);
     }
 
     private void loadFile(File selectedFile) {
@@ -142,10 +139,8 @@ public class ConverterAudioController {
     @FXML
     public void onSelectOutputDirectoryPressed() {
         Stage stage = getStage(btnChoiceDirForSaveMP3);
-        File selectedPath = directoryChooser(stage, audioProperties.getOutput(), "Select directory for save image");
-        if(selectedPath != null) {
-            audioProperties.setOutput(selectedPath);
-        }
+        directoryChooser(stage, audioProperties.getOutput(), "Select directory for save image")
+                .ifPresent(audioProperties::setOutput);
     }
 
     @FXML
@@ -169,7 +164,8 @@ public class ConverterAudioController {
         progressBarConvert.setProgress(0);
 
         CompletableFuture.supplyAsync(() -> getMetadata(audioProperties.getSrcFile()), IO_EXECUTOR)
-            .thenCompose(sourceInfo -> {
+            .thenCompose(sourceInfoOpt -> {
+                MultimediaInfo sourceInfo = sourceInfoOpt.orElse(null);
                 if (sourceInfo != null && sourceInfo.getAudio() == null) {
                     Platform.runLater(() -> {
                         Alerts.alertDialog(
@@ -258,35 +254,43 @@ public class ConverterAudioController {
         hideSuccessMessage(labelSuccessConvert, audioProperties.getHideSuccessMessageTimer());
     }
 
+    @FXML
     public void onFormatMp3Pressed() {
         selectFormat("mp3", btnToMP3);
     }
 
+    @FXML
     public void onFormatAACPressed() {
         selectFormat("aac", btnToAAC);
         System.out.println("Тут может быть два формата");
     }
 
+    @FXML
     public void onFormatOggPressed() {
         selectFormat("ogg", btnToOggVorbis);
     }
 
+    @FXML
     public void onFormatOpusPressed() {
         selectFormat("opus", btnToOPUS);
     }
 
+    @FXML
     public void onFormatFlacPressed() {
         selectFormat("flac", btnToFLAC);
     }
 
+    @FXML
     public void onFormatAlacPressed() {
         selectFormat("m4a", btnToALAC);
     }
 
+    @FXML
     public void onFormatWAvPressed() {
         selectFormat("wav", btnToWAV);
     }
 
+    @FXML
     public void onFormatAiffPressed() {
         selectFormat("aiff", btnToAIFF);
     }
@@ -304,18 +308,21 @@ public class ConverterAudioController {
         hideSuccessMessage(labelSuccessConvert, audioProperties.getHideSuccessMessageTimer());
     }
 
+    @FXML
     public void onChoiceBitRate() {
         audioProperties.setBitRate(parseComboBoxStringToInt(comboBoxChoiceBitRate));
         ErrorLogger.info("User select bitRate: " + audioProperties.getBitRate());
 
     }
 
+    @FXML
     public void onChoiceChannels() {
         audioProperties.setChannel(parseComboBoxStringToInt(comboBoxChoiceChannels));
         ErrorLogger.info("User select channels: " + audioProperties.getChannel());
 
     }
 
+    @FXML
     public void onChoiceSamplingRate() {
         audioProperties.setSamplingRate(parseComboBoxStringToInt(comboBoxChoiceSamplingRate));
         ErrorLogger.info("User select sampling rate: " + audioProperties.getSamplingRate());

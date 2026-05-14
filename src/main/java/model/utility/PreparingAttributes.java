@@ -6,6 +6,8 @@ import ws.schild.jave.encode.AudioAttributes;
 import ws.schild.jave.encode.VideoAttributes;
 import ws.schild.jave.info.VideoSize;
 
+import java.util.Optional;
+
 public class PreparingAttributes {
     public static AudioAttributes audioAttributes(int channels, int samplingRate, int bitrate, String audioCodec) {
         AudioAttributes audio = new AudioAttributes();
@@ -26,7 +28,7 @@ public class PreparingAttributes {
             video.setBitRate(bitrate * 1000);
         }
         video.setPixelFormat(pixelFormat);
-        video.setSize(parseSize(resolution));
+        parseSize(resolution).ifPresent(video::setSize);
         return video;
     }
 
@@ -36,7 +38,7 @@ public class PreparingAttributes {
         return c.contains("png") || c.contains("ffv1") || c.contains("huffyuv");
     }
 
-    public static VideoSize parseSize(String resolution) {
+    public static Optional<VideoSize> parseSize(String resolution) {
         if (resolution != null && resolution.contains("x")) {
             try {
                 String[] res = resolution.split("x");
@@ -46,11 +48,11 @@ public class PreparingAttributes {
                 if (width % 2 != 0) width--;
                 if (height % 2 != 0) height--;
 
-                return new VideoSize(width, height);
+                return Optional.of(new VideoSize(width, height));
             } catch (Exception e) {
                 ErrorLogger.warn("Invalid resolution format: " + resolution);
             }
         }
-        return null;
+        return Optional.empty();
     }
 }

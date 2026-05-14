@@ -7,18 +7,19 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 
 public class UsefulMethods {
-    public static BufferedImage readPreviewImage(File imageFile) throws IOException {
+    public static Optional<BufferedImage> readPreviewImage(File imageFile) throws IOException {
         if ("ico".equals(getFileExtension(imageFile))) {
             List<BufferedImage> images = ICODecoder.read(imageFile);
             if (images.isEmpty()) {
-                return null;
+                return Optional.empty();
             }
 
-            return getLargestImage(images);
+            return Optional.of(getLargestImage(images));
         }
-        return ImageIO.read(imageFile);
+        return Optional.ofNullable(ImageIO.read(imageFile));
     }
 
     public static BufferedImage getLargestImage(List<BufferedImage> images) {

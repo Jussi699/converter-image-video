@@ -11,6 +11,7 @@ import ws.schild.jave.info.MultimediaInfo;
 import java.io.File;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -83,23 +84,19 @@ public class Util {
         }
     }
 
-    public static File directoryChooser(Stage stage, File currentDirectory, String title) {
+    public static Optional<File> directoryChooser(Stage stage, File currentDirectory, String title) {
         DirectoryChooser directoryChooser = new DirectoryChooser();
         directoryChooser.setTitle(title);
-        File initialDirectory = resolveInitialDirectory(currentDirectory);
+        resolveInitialDirectory(currentDirectory).ifPresent(directoryChooser::setInitialDirectory);
 
-        if (initialDirectory != null) {
-            directoryChooser.setInitialDirectory(initialDirectory);
-        }
-
-        return directoryChooser.showDialog(stage);
+        return Optional.ofNullable(directoryChooser.showDialog(stage));
     }
 
-    public static File resolveInitialDirectory(File directory) {
+    public static Optional<File> resolveInitialDirectory(File directory) {
         if (directory != null && directory.exists() && directory.isDirectory()) {
-            return directory;
+            return Optional.of(directory);
         }
-        return null;
+        return Optional.empty();
     }
 
     public static void showProgressBar(ProgressBar bar, PauseTransition timer) {
@@ -111,13 +108,13 @@ public class Util {
         return (Stage) control.getScene().getWindow();
     }
 
-    public static MultimediaInfo getMetadata(File file) {
-        if (file == null || !file.exists()) return null;
+    public static Optional<MultimediaInfo> getMetadata(File file) {
+        if (file == null || !file.exists()) return Optional.empty();
         try {
-            return new MultimediaObject(file).getInfo();
+            return Optional.of(new MultimediaObject(file).getInfo());
         } catch (Exception e) {
             ErrorLogger.log(111, ErrorLogger.Level.ERROR, "Failed to get metadata", e);
-            return null;
+            return Optional.empty();
         }
     }
 
